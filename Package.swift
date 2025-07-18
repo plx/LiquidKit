@@ -36,6 +36,9 @@ let package = Package(
         .testTarget(
             name: "LiquidKitTests",
             dependencies: ["LiquidKit"],
+            resources: [
+                .copy("Resources")
+            ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency"),
                 .swiftLanguageMode(.v6)

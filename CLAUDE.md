@@ -61,17 +61,28 @@ The library follows a classic three-phase template engine architecture:
 
 ## Testing Strategy
 
+### Existing Test Suite
 The project has good test coverage with tests for:
 - All standard filters
-- All standard tags
+- All standard tags  
 - Parser edge cases
 - Operator behavior
+
+### Golden Liquid Integration
+We've integrated the [golden-liquid](https://github.com/jg-rp/golden-liquid) test suite - a comprehensive, standardized test format with 1012 test cases that validates Liquid template engine implementations. This provides:
+- Spec compliance tracking
+- Data-driven tests using Swift Testing
+- Detailed diagnostics for failures
+- Tag-based test filtering
+
+See `guides/GoldenLiquid.md` for detailed documentation on the test infrastructure.
 
 When modernizing, ensure:
 1. All existing tests pass
 2. Add tests for any new Swift 6 features
 3. Test on minimum deployment targets
 4. Benchmark performance improvements
+5. Run golden-liquid tests to track spec compliance
 
 ## Quick Start Commands
 
@@ -104,13 +115,39 @@ LiquidKit/
 │       └── Extensions/       # String and Double extensions
 ├── Tests/
 │   └── LiquidKitTests/      # Comprehensive test suite
+│       ├── Resources/        # Test resources
+│       │   └── golden_liquid.json  # 1012 golden-liquid test cases
+│       ├── GoldenLiquid*.swift     # Golden-liquid test infrastructure
+│       └── [existing tests]
+├── guides/
+│   └── GoldenLiquid.md      # Golden-liquid integration guide
 └── previous/                 # Original CocoaPods structure (reference only)
 
 ## Known Issues and Limitations
 
+Based on golden-liquid test suite analysis:
+
+### Missing Tags (with test count)
+- `echo tag` - 29 tests (basic output tag)
+- `liquid tag` - 19 tests (inline Liquid syntax)  
+- `render tag` - 17 tests (isolated scope rendering)
+- `tablerow tag` - 15 tests (HTML table generation)
+- `cycle tag` - 12 tests (cycling through values)
+- `increment tag` - 9 tests (counter management)
+- `ifchanged tag` - 5 tests (change detection)
+- `decrement tag` - 4 tests (counter management)
+
+### Implementation Gaps
+1. **Array Indexing**: Variable array indexing not supported (e.g., `array[i]` where i is a variable)
+2. **Bracket Notation**: Object property access via brackets not supported (e.g., `obj['key']`)
+3. **Filter Validation**: Extra filter arguments don't cause errors as they should
+4. **Range Output**: Range objects don't render properly when output directly
+5. **Error Handling**: Some edge cases don't match Liquid's strict error behavior
+
+### Other Limitations
 1. **Documentation**: Could benefit from more inline documentation and usage examples
 2. **Performance**: Some recursive parsing patterns could potentially be optimized
-3. **Advanced Liquid Features**: Some less common Liquid features may not be implemented
+3. **External Templates**: The `templates` field for include/render not fully utilized
 
 ## Resources
 
@@ -158,6 +195,20 @@ LiquidKit/
 - **String Operations**: Native Swift String is often faster than NSString bridging
 - **Set vs NSOrderedSet**: Pure Swift implementation with Array + Set is cleaner and performs well
 - **Lesson**: Modern Swift often provides better performance than old Foundation APIs
+
+### 8. Swift Testing Integration
+- **Data-Driven Tests**: Swift Testing's `@Test` with arguments is perfect for test suites like golden-liquid
+- **Resource Management**: Test resources go in `Tests/TestTarget/Resources/` with `.copy("Resources")` in Package.swift
+- **JSON to Swift Types**: Create intermediate enums for flexible JSON decoding before converting to domain types
+- **Test Organization**: Group related tests by feature/tag for better test execution control
+- **Lesson**: Swift Testing's parameterized tests scale well - we successfully integrated 1012 test cases
+
+### 9. Test Suite Adoption Strategy
+- **Incremental Approach**: Start with parsing tests, then loading, then validation
+- **Safe Execution**: Wrap test execution in do/catch to prevent crashes during exploration
+- **Feature Discovery**: Use test analysis to identify missing features before implementation
+- **Detailed Diagnostics**: Include all relevant context in test failure messages
+- **Lesson**: Comprehensive test suites reveal implementation gaps quickly and provide a clear roadmap
 
 ## Contributing Guidelines
 
