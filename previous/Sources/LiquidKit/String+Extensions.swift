@@ -5,8 +5,6 @@
 //  Created by YourtionGuo on 29/06/2017.
 //
 //
-import Foundation
-
 extension String {
 
     func findFirstNot(character: Character) -> String.Index? {
@@ -140,44 +138,32 @@ extension String {
 
 	var splitKeyPath: (key: String, index: Int?, remainder: String?)?
 	{
+		let nsKeyPath = self as NSString
 		let pattern = "(\\w+)(\\[(\\d+)\\])?\\.?"
 
-		let regex: NSRegularExpression
-		do {
-			regex = try NSRegularExpression(pattern: pattern, options: [])
-		} catch {
-			// This pattern is hardcoded and should never fail
-			assertionFailure("Failed to compile keypath regex pattern: \(error)")
-			return nil
-		}
+		let regex = try! NSRegularExpression(pattern: pattern, options: [])
 
 		guard
-			let match = regex.firstMatch(in: self, options: [], range: NSRange(location: 0, length: self.utf16.count)),
+			let match = regex.firstMatch(in: self, options: [], range: nsKeyPath.fullRange),
 			match.range(at: 1).location != NSNotFound
 		else
 		{
 			return nil
 		}
 
-		guard let keyRange = Range(match.range(at: 1), in: self) else {
-			return nil
-		}
-		let key = String(self[keyRange])
+		let key = nsKeyPath.substring(with: match.range(at: 1))
 		let remainder: String?
 
-		if match.range.upperBound < self.utf16.count
+		if match.range.upperBound < nsKeyPath.length
 		{
-			let startIndex = self.index(self.startIndex, offsetBy: match.range.upperBound)
-			remainder = String(self[startIndex...])
+			remainder = nsKeyPath.substring(from: match.range.upperBound)
 		}
 		else
 		{
 			remainder = nil
 		}
 
-		if match.range(at: 3).location != NSNotFound, 
-		   let range = Range(match.range(at: 3), in: self),
-		   let index = Int(self[range])
+		if match.range(at: 3).location != NSNotFound, let index = Int(nsKeyPath.substring(with: match.range(at: 3)))
 		{
 			return (key, index, remainder)
 		}
@@ -185,5 +171,13 @@ extension String {
 		{
 			return (key, nil, remainder)
 		}
+	}
+}
+
+extension NSString
+{
+	var fullRange: NSRange
+	{
+		return NSMakeRange(0, length)
 	}
 }

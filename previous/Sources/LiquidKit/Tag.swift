@@ -94,24 +94,17 @@ open class Tag
 			}
 
 			let parameterStatement = String(processedStatement[range])
+			let nsParameterStatement = parameterStatement as NSString
 
 			// Now that we found the parameter range we use NSRegularExpression to extract the capture groups.
-			let regex: NSRegularExpression
-			do {
-				regex = try NSRegularExpression(pattern: pattern, options: [])
-			} catch {
-				// Pattern is dynamically constructed but should be valid
-				print("[LiquidKit] Warning: Failed to compile regex pattern '\(pattern)': \(error)")
-				continue
-			}
+			let regex = try! NSRegularExpression(pattern: pattern, options: [])
 
-			if let match = regex.firstMatch(in: parameterStatement, options: [], range: NSRange(location: 0, length: parameterStatement.utf16.count))
+			if let match = regex.firstMatch(in: parameterStatement, options: [], range: nsParameterStatement.fullRange)
 			{
-				if match.range(at: 2).location != NSNotFound,
-				   let valueRange = Range(match.range(at: 2), in: parameterStatement)
+				if match.range(at: 2).location != NSNotFound
 				{
 					// This parameter has a value, so we parse that value and assign it to the keyword.
-					let value = String(parameterStatement[valueRange])
+					let value = nsParameterStatement.substring(with: match.range(at: 2))
 					compiledExpression[parameter] = parser.compileFilter(value, context: context)
 				}
 				else
@@ -919,7 +912,7 @@ class TagCycle: Tag
 
 class TagTablerow: TagFor
 {
-	internal private(set) var tableRowIterator: TableRowIterator? = nil
+	internal private(set) var tableRowIterator: TableRowIterator! = nil
 
 	override class var keyword: String
 	{
@@ -950,10 +943,6 @@ class TagTablerow: TagFor
 	{
 		super.didDefine(scope: scope, parser: parser)
 
-		guard let tableRowIterator = tableRowIterator else {
-			print("[LiquidKit] Error: tableRowIterator not initialized in TagTablerow")
-			return
-		}
 		scope.processedStatements.append(contentsOf: tableRowIterator.next())
 	}
 

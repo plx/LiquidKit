@@ -8,7 +8,7 @@
 import Foundation
 
 /// A class modeling an infix operator
-open class Operator: @unchecked Sendable
+open class Operator
 {
 	/// Keyword used to identify the filter.
 	let identifier: String
@@ -17,7 +17,7 @@ open class Operator: @unchecked Sendable
 	let lambda: ((Token.Value, Token.Value) -> Token.Value)
 	
 	/// Filter constructor.
-	init(identifier: String, lambda: @escaping @Sendable (Token.Value, Token.Value) -> Token.Value) {
+	init(identifier: String, lambda: @escaping (Token.Value, Token.Value) -> Token.Value) {
 		self.identifier = identifier
 		self.lambda = lambda
 	}

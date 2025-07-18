@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct Lexer: Sendable
+public struct Lexer
 {
 	let templateString: String
 	
@@ -54,10 +54,7 @@ public struct Lexer: Sendable
 					tokens.append(createToken(string: text))
 				}
 				
-				guard let end = map[scanned] else {
-					print("[LiquidKit] Error: No matching end delimiter for '\(scanned)'")
-					continue
-				}
+				let end = map[scanned]!
 				let result = scanner.scan(until: end, returnUntil: true)
 				
 				if createToken(string: result) == .tag(value: "raw")

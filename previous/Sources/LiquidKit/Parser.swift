@@ -127,7 +127,7 @@ open class Parser
 					}
 					else
 					{
-						print("[LiquidKit] Error: terminating scope tag scope has no parent scope!!!")
+						NSLog("terminating scope tag scope has no parent scope!!!")
 					}
 				}
 
@@ -153,7 +153,7 @@ open class Parser
 
 		if currentScope !== rootScope
 		{
-			print("[LiquidKit] Error: Unbalanced scopes!!")
+			NSLog("Unbalanced scopes!!")
 		}
 
 		return rootScope
@@ -169,10 +169,7 @@ open class Parser
 			return compileOperators(for: statement, context: context)
 		}
 
-		guard let firstStatement = splitStatement.first else {
-			return .nil
-		}
-		var filteredValue = compileOperators(for: String(firstStatement), context: context)
+		var filteredValue = compileOperators(for: String(splitStatement.first!), context: context)
 
 		for filterString in splitStatement[1...]
 		{
@@ -180,14 +177,11 @@ open class Parser
 
 			guard filterComponents.count <= 2 else
 			{
-				print("[LiquidKit] Error: bad filter syntax: \(filterString). Stopping filter processing.")
+				NSLog("Error: bad filter syntax: \(filterString). Stopping filter processing.")
 				return filteredValue
 			}
 
-			guard let firstComponent = filterComponents.first else {
-				continue
-			}
-			let filterIdentifier = String(firstComponent).trimmingWhitespaces
+			let filterIdentifier = String(filterComponents.first!).trimmingWhitespaces
 			let filterParameters: [Token.Value]?
 
 			if filterComponents.count == 1
@@ -196,16 +190,12 @@ open class Parser
 			}
 			else
 			{
-				guard let lastComponent = filterComponents.last else {
-					filterParameters = []
-					continue
-				}
-				filterParameters = String(lastComponent).smartSplit(separator: ",").map({ context.parseString(String($0)) ?? .nil })
+				filterParameters = String(filterComponents.last!).smartSplit(separator: ",").map({ context.parseString(String($0)) ?? .nil })
 			}
 
 			guard let filter = filters.first(where: { $0.identifier == filterIdentifier }) else
 			{
-				print("[LiquidKit] Error: Unknown filter name: \(filterIdentifier). Stopping filter processing.")
+				NSLog("Unknown filter name: \(filterIdentifier). Stopping filter processing.")
 				return filteredValue
 			}
 
@@ -223,13 +213,13 @@ open class Parser
 
 		guard keyword.count > 0 else
 		{
-			print("[LiquidKit] Error: Malformed tag: \"\(statement)\"")
+			NSLog("Malformed tag: “\(statement)”")
 			return nil
 		}
 
 		guard let tags = self.tags[String(keyword)], tags.count > 0 else
 		{
-			print("[LiquidKit] Error: Unknown tag keyword: \"\(keyword)\"")
+			NSLog("Unknown tag keyword: “\(keyword)”")
 			return nil
 		}
 
@@ -248,7 +238,7 @@ open class Parser
 			catch
 			{
 				#if DEBUG
-				print("[LiquidKit] Error parsing tag: \(error.localizedDescription)")
+				NSLog("Error parsing tag: \(error.localizedDescription)")
 				#endif
 			}
 		}

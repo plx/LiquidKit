@@ -5,8 +5,6 @@
 //  Created by YourtionGuo on 28/06/2017.
 //
 //
-import Foundation
-
 /// A container for template variables.
 open class Context
 {
@@ -21,7 +19,7 @@ open class Context
 	
 	public init(dictionary: [String: Any?])
 	{
-		self.variables = dictionary.compactMapValues({ Context.parseAny($0) })
+		self.variables = dictionary.mapValues({ Context.parseAny($0) }).filter({ $0.value != nil }).mapValues({ $0! })
 	}
 	
 	open func getValue(for key: String) -> Token.Value?
@@ -106,6 +104,7 @@ open class Context
 	internal func parseString(_ token: String, onlyIfLiteral: Bool = false) -> Token.Value?
 	{
 		let trimmedToken = token.trimmingWhitespaces
+		let nsToken = token as NSString
 
 		if trimmedToken == "true"
 		{
@@ -116,12 +115,10 @@ open class Context
 			return .bool(false)
 		}
 		else if let result = NSRegularExpression.rangeRegex.firstMatch(in: token, options: [],
-																	   range: NSRange(location: 0, length: token.utf16.count)),
+																	   range: NSMakeRange(0, nsToken.length)),
 			result.numberOfRanges == 3,
-			let lowerRange = Range(result.range(at: 1), in: token),
-			let upperRange = Range(result.range(at: 2), in: token),
-			let lowerBound = parseString(String(token[lowerRange]))?.integerValue,
-			let upperBound = parseString(String(token[upperRange]))?.integerValue
+			let lowerBound = parseString(nsToken.substring(with: result.range(at: 1)))?.integerValue,
+			let upperBound = parseString(nsToken.substring(with: result.range(at: 2)))?.integerValue
 		{
 			return .range(lowerBound...upperBound)
 		}
@@ -194,9 +191,7 @@ private extension Dictionary where Key == String, Value == Token.Value
 			return dictionary.valueFor(keyPath: remainder)
 
 		case (.array(let array), nil, .some(let remainder)) where remainder.hasPrefix("first"):
-			guard let rangeFirst = remainder.range(of: "first\\.?", options: .regularExpression) else {
-				return nil
-			}
+			let rangeFirst = remainder.range(of: "first\\.?", options: .regularExpression)!
 
 			if rangeFirst.upperBound == remainder.endIndex
 			{
@@ -212,9 +207,7 @@ private extension Dictionary where Key == String, Value == Token.Value
 			}
 
 		case (.array(let array), nil, .some(let remainder)) where remainder.hasPrefix("last"):
-			guard let rangeLast = remainder.range(of: "last\\.?", options: .regularExpression) else {
-				return nil
-			}
+			let rangeLast = remainder.range(of: "last\\.?", options: .regularExpression)!
 
 			if rangeLast.upperBound == remainder.endIndex
 			{

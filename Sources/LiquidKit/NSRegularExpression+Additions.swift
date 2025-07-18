@@ -9,10 +9,13 @@ import Foundation
 
 extension NSRegularExpression
 {
-	static var rangeRegex = try! NSRegularExpression(pattern: "\\(([^\\.\\n]+)\\.\\.([^\\.\\n]+)\\)", options: [])
-
-	static func tagParameterRegex(for name: String) -> NSRegularExpression
-	{
-		return try! NSRegularExpression(pattern: "\(name)(\\s*?:\\s*?(\\w+))?", options: [])
-	}
+	/// Regex pattern to match range expressions like "(1..10)"
+	static let rangeRegex: NSRegularExpression = {
+		do {
+			return try NSRegularExpression(pattern: "\\(([^\\.\\n]+)\\.\\.([^\\.\\n]+)\\)", options: [])
+		} catch {
+			// This pattern is hardcoded and should never fail
+			fatalError("Failed to compile range regex pattern: \(error)")
+		}
+	}()
 }

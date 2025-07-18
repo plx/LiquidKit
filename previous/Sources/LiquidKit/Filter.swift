@@ -138,6 +138,10 @@ fileprivate class StrftimeFormatter {
                 case "F":
                     pattern += "yyyy-MM-dd"
                     
+                // 12-hour without leading zero
+                case "l":
+                    pattern += "h"
+                    
                 // Milliseconds
                 case "L":
                     pattern += "SSS"
@@ -165,7 +169,7 @@ fileprivate class StrftimeFormatter {
 /// A class representing a filter. Filters transform `Token.Value` objects into other `Token.Value` objects, and might
 /// accept one or more `Token.Value` parameters. Filters are identified by the `identifier` value, and only one filter
 /// can be defined per `identifier`.
-open class Filter: @unchecked Sendable
+open class Filter
 {
 	/// Keyword used to identify the filter.
 	let identifier: String
@@ -174,7 +178,7 @@ open class Filter: @unchecked Sendable
 	let lambda: ((Token.Value, [Token.Value]) -> Token.Value)
 
 	/// Filter constructor.
-	public init(identifier: String, lambda: @escaping @Sendable (Token.Value, [Token.Value]) -> Token.Value)
+	public init(identifier: String, lambda: @escaping (Token.Value, [Token.Value]) -> Token.Value)
 	{
 		self.identifier = identifier
 		self.lambda = lambda
@@ -195,12 +199,6 @@ public extension Filter
 {
 	static func parseDate(string inputString: String) -> Date?
 	{
-		// Check for empty strings first
-		guard !inputString.isEmpty else
-		{
-			return nil
-		}
-		
 		guard inputString != "today", inputString != "now" else
 		{
 			return Date()
@@ -301,8 +299,8 @@ extension Filter
 			return .nil
 		}
 
-		var firstWord: String?
-		var firstWordRange: Range<String.Index>?
+		var firstWord: String!
+		var firstWordRange: Range<String.Index>!
 
 		inputString.enumerateSubstrings(in: inputString.startIndex..., options: .byWords)
 		{
@@ -313,11 +311,7 @@ extension Filter
 			stop = true
 		}
 
-		guard let word = firstWord, let range = firstWordRange else {
-			return .string(inputString)
-		}
-
-		return .string(inputString.replacingCharacters(in: range, with: word.localizedCapitalized))
+		return .string(inputString.replacingCharacters(in: firstWordRange, with: firstWord.localizedCapitalized))
 	}
 
 	static let ceil = Filter(identifier: "ceil")
@@ -365,23 +359,17 @@ extension Filter
 			return .nil
 		}
 
-		// Handle nil input
-		guard input != .nil else
-		{
-			return .string("")
-		}
-
 		var date: Date? = Filter.parseDate(string: input.stringValue)
 
-		guard let date = date else
+		guard date != nil else
 		{
-			return .string("")
+			return .nil
 		}
 
 		let strFormatter = StrftimeFormatter()
 		strFormatter.setFormatString(formatString)
 
-		if let dateString = strFormatter.string(from: date)
+		if let dateString = strFormatter.string(from: date!)
 		{
 			return .string(dateString)
 		}
@@ -421,10 +409,7 @@ extension Filter
 			return .integer(Int(Darwin.floor(dividendDouble / Double(divisorInt))))
 
 		case .decimal:
-			guard let divisorDouble = divisor.doubleValue else {
-				return .nil
-			}
-			return .decimal(Decimal(dividendDouble / divisorDouble))
+			return .decimal(Decimal(dividendDouble / divisor.doubleValue!))
 
 		default:
 			return .nil
@@ -952,19 +937,7 @@ extension Filter
 			return .nil
 		}
 
-		// Preserve order while removing duplicates
-		var seen = Set<String>()
-		var uniqueArray = [Token.Value]()
-		
-		for value in inputArray {
-			let key = value.stringValue
-			if !seen.contains(key) {
-				seen.insert(key)
-				uniqueArray.append(value)
-			}
-		}
-		
-		return .array(uniqueArray)
+		return .array(NSOrderedSet(array: inputArray).array.compactMap({ $0 as? Token.Value }))
 	}
 
 	static let upcase = Filter(identifier: "upcase")

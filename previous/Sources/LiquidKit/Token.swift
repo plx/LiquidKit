@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum Token : Equatable, Sendable
+public enum Token : Equatable
 {
     /// A token representing a piece of text.
     case text(value: String)
@@ -33,7 +33,7 @@ public enum Token : Equatable, Sendable
     }
 
 	/// An enum whose instances are used to represent token variable values.
-	public indirect enum Value: Hashable, Sendable
+	public indirect enum Value: Hashable
 	{
 		case `nil`
 		case bool(Bool)
@@ -91,7 +91,7 @@ public enum Token : Equatable, Sendable
 		{
 			switch self
 			{
-			case .decimal(let decimal): return (decimal as NSNumber).doubleValue
+			case .decimal(let decimal): return NSDecimalNumber(decimal: decimal).doubleValue
 			case .integer(let integer): return Double(integer)
 			case .string(let string): return Double(string)
 			default:
@@ -109,7 +109,7 @@ public enum Token : Equatable, Sendable
 		{
 			switch self
 			{
-			case .decimal(let decimal): return (decimal as NSNumber).intValue
+			case .decimal(let decimal): return NSDecimalNumber(decimal: decimal).intValue
 			case .integer(let integer): return integer
 			case .string(let string): return Int(string)
 			default:

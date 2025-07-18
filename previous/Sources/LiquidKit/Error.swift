@@ -6,7 +6,7 @@
 //
 //
 
-public struct TemplateSyntaxError : Error, Equatable, CustomStringConvertible, Sendable {
+public struct TemplateSyntaxError : Error, Equatable, CustomStringConvertible {
     public let description:String
     
     public init(_ description:String) {
