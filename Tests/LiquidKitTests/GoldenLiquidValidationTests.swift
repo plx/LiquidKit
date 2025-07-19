@@ -77,137 +77,137 @@ struct GoldenLiquidValidationTests {
     
     // MARK: - Filter Tests
     
-    @Test("Capitalize Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "capitalize filter"))
+    @Test("Capitalize Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "capitalize filter"))
     func testCapitalizeFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Downcase Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "downcase filter"))
+    @Test("Downcase Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "downcase filter"))
     func testDowncaseFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Upcase Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "upcase filter"))
+    @Test("Upcase Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "upcase filter"))
     func testUpcaseFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Escape Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "escape filter"))
+    @Test("Escape Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "escape filter"))
     func testEscapeFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Strip HTML Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "strip_html filter"))
+    @Test("Strip HTML Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "strip_html filter"))
     func testStripHtmlFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Date Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "date filter"))
+    @Test("Date Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "date filter"))
     func testDateFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Join Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "join filter"))
+    @Test("Join Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "join filter"))
     func testJoinFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Split Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "split filter"))
+    @Test("Split Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "split filter"))
     func testSplitFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Replace Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "replace filter"))
+    @Test("Replace Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "replace filter"))
     func testReplaceFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Size Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "size filter"))
+    @Test("Size Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "size filter"))
     func testSizeFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Sort Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "sort filter"))
+    @Test("Sort Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "sort filter"))
     func testSortFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Where Filter", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "where filter"))
+    @Test("Where Filter", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "where filter"))
     func testWhereFilter(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
     // MARK: - Basic Tag Tests
     
-    @Test("Comment Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "comment tag"))
+    @Test("Comment Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "comment tag"))
     func testCommentTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Raw Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "raw tag"))
+    @Test("Raw Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "raw tag"))
     func testRawTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Assign Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "assign tag"))
+    @Test("Assign Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "assign tag"))
     func testAssignTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Capture Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "capture tag"))
+    @Test("Capture Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "capture tag"))
     func testCaptureTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
     // MARK: - Control Flow Tests
     
-    @Test("If/Else Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "if tag"))
+    @Test("If/Else Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "if tag"))
     func testIfTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Unless Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "unless tag"))
+    @Test("Unless Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "unless tag"))
     func testUnlessTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Case/When Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "case tag"))
+    @Test("Case/When Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "case tag"))
     func testCaseTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
     // MARK: - Loop Tests
     
-    @Test("For Loop Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "for tag"))
+    @Test("For Loop Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "for tag"))
     func testForLoop(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Cycle Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "cycle tag"))
+    @Test("Cycle Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "cycle tag"))
     func testCycleTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Tablerow Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "tablerow tag"))
+    @Test("Tablerow Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "tablerow tag"))
     func testTablerowTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
     // MARK: - Variable and Output Tests
     
-    @Test("Variable Output Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "variable"))
+    @Test("Variable Output Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "variable"))
     func testVariableOutput(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
-    @Test("Echo Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "echo tag"))
+    @Test("Echo Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "echo tag"))
     func testEchoTag(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
     // MARK: - Advanced Feature Tests
     
-    @Test("Include Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "include tag"))
+    @Test("Include Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "include tag"))
     func testIncludeTag(_ testCase: GoldenLiquidTestCase) throws {
         if testCase.templates != nil {
             Issue.record("Include tag with templates not yet supported")
@@ -216,7 +216,7 @@ struct GoldenLiquidValidationTests {
         try validateTestCase(testCase)
     }
     
-    @Test("Render Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "render tag"))
+    @Test("Render Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "render tag"))
     func testRenderTag(_ testCase: GoldenLiquidTestCase) throws {
         if testCase.templates != nil {
             Issue.record("Render tag with templates not yet supported")
@@ -225,7 +225,7 @@ struct GoldenLiquidValidationTests {
         try validateTestCase(testCase)
     }
     
-    @Test("Liquid Tag Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "liquid tag"))
+    @Test("Liquid Tag Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "liquid tag"))
     func testLiquidTag(_ testCase: GoldenLiquidTestCase) throws {
         // Liquid tag is a newer feature that allows Liquid syntax without delimiters
         Issue.record("Liquid tag not yet implemented")
@@ -233,14 +233,14 @@ struct GoldenLiquidValidationTests {
     
     // MARK: - Operator Tests
     
-    @Test("Operator Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "operators"))
+    @Test("Operator Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "operators"))
     func testOperators(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }
     
     // MARK: - Whitespace Control Tests
     
-    @Test("Whitespace Control Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "whitespace"))
+    @Test("Whitespace Control Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "whitespace"))
     func testWhitespaceControl(_ testCase: GoldenLiquidTestCase) throws {
         // Whitespace control with {%- and -%} may not be fully implemented
         try validateTestCase(testCase)
@@ -248,7 +248,7 @@ struct GoldenLiquidValidationTests {
     
     // MARK: - Error Handling Tests
     
-    @Test("Error Handling Tests", arguments: try! GoldenLiquidTestCase.loadTestCases(withTag: "errors"))
+    @Test("Error Handling Tests", arguments: GoldenLiquidTestCase.mandatoryData(withTag: "errors"))
     func testErrorHandling(_ testCase: GoldenLiquidTestCase) throws {
         try validateTestCase(testCase)
     }

@@ -325,6 +325,33 @@ extension GoldenLiquidTestCase {
         }
     }
     
+    /// Loads test cases with mandatory data for use in @Test macro invocations
+    /// This function will fatalError if the test data cannot be loaded, which is appropriate
+    /// for test setup that should never fail in a properly configured test environment.
+    static func mandatoryData(
+        withTag testCaseTag: String,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) -> [GoldenLiquidTestCase] {
+        do {
+            return try GoldenLiquidTestCase.loadTestCases(withTag: testCaseTag)
+        }
+        catch let error {
+            fatalError(
+                """
+                Unable to load mandatory test-case data!
+                
+                - tag: \(testCaseTag)
+                - error: \(String(reflecting: error))
+                - file: \(file)
+                - line: \(line)
+                """,
+                file: file,
+                line: line
+            )
+        }
+    }
+    
     /// Creates a Context object from this test case's data
     func createContext() -> Context {
         if let data = data {
