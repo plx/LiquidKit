@@ -28,14 +28,14 @@ public struct Lexer: Sendable
 		
 		if string.hasPrefix("{{")
 		{
-			return .variable(value: stripped)
+			return .variable(stripped)
 		}
 		else if string.hasPrefix("{%")
 		{
-			return .tag(value: stripped)
+			return .tag(stripped)
 		}
 		
-		return .text(value: string)
+		return .text(string)
 	}
 	
 	/// Returns an array of tokens from a given template string.
@@ -60,11 +60,11 @@ public struct Lexer: Sendable
 				}
 				let result = scanner.scan(until: end, returnUntil: true)
 				
-				if createToken(string: result) == .tag(value: "raw")
+				if createToken(string: result) == .tag("raw")
 				{
 					// Entered raw mode. Must find the {% endraw %} tag now.
 					let rawContent = scanner.scan(until: "{% endraw %}", returnUntil: false)
-					tokens.append(.text(value: rawContent))
+					tokens.append(.text(rawContent))
 				}
 				else
 				{

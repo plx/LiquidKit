@@ -4,44 +4,45 @@
 import PackageDescription
 
 let package = Package(
-    name: "LiquidKit",
-    platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .watchOS(.v6),
-        .tvOS(.v13)
-    ],
-    products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "LiquidKit",
-            targets: ["LiquidKit"]),
-    ],
-    dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/Kitura/swift-html-entities.git", from: "4.0.1")
-    ],
-    targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "LiquidKit",
-            dependencies: [
-                .product(name: "HTMLEntities", package: "swift-html-entities")
-            ],
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency"),
-                .swiftLanguageMode(.v6)
-            ]),
-        .testTarget(
-            name: "LiquidKitTests",
-            dependencies: ["LiquidKit"],
-            resources: [
-                .copy("Resources")
-            ],
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency"),
-                .swiftLanguageMode(.v6)
-            ]),
-    ]
+  name: "LiquidKit",
+  platforms: [
+    .iOS(.v18),
+    .macOS(.v15),
+    .watchOS(.v11),
+    .tvOS(.v18)
+  ],
+  products: [
+    .library(
+      name: "LiquidKit",
+      targets: ["LiquidKit"]
+    )
+  ],
+  dependencies: [
+    .package(
+      url: "https://github.com/Kitura/swift-html-entities.git",
+      from: "4.0.1"
+    )
+  ],
+  targets: [
+    // Targets are the basic building blocks of a package, defining a module or a test suite.
+    // Targets can depend on other targets in this package and products from dependencies.
+    .target(
+      name: "LiquidKit",
+      dependencies: [
+        .product(
+          name: "HTMLEntities",
+          package: "swift-html-entities"
+        )
+      ]
+    ),
+    .testTarget(
+      name: "LiquidKitTests",
+      dependencies: ["LiquidKit"],
+      resources: [
+        .copy("Resources")
+      ]
+    ),
+  ],
+  swiftLanguageModes: [.v6]
 )
+

@@ -1,0 +1,12 @@
+
+public struct EqualsOperator: Operator {
+  
+  public static let operatorIdentifier: String = "=="
+  
+  public func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value {
+    .bool(lhs == rhs)
+  }
+  
+  @inlinable
+  package init() { }
+}

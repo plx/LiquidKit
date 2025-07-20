@@ -14,7 +14,7 @@ open class Parser
 	private var tokens: [Token]
 	private let context: Context
 	private var filters: [Filter] = []
-	private var operators: [Operator] = []
+  private var operators: [String: any Operator] = [String: any Operator].builtInOperators
 	private var tags: [String: [Tag.Type]] = [:]
 	private var parseErrors: [Error] = []
 
@@ -40,7 +40,6 @@ open class Parser
 
 	open func registerOperators()
 	{
-		Operator.builtInOperators.forEach(register)
 	}
 
 	/// Parse the given tokens into nodes
@@ -54,9 +53,9 @@ open class Parser
 		filters.append(filter)
 	}
 
-	public func register(operator: Operator)
+	public func register(operator: some Operator)
 	{
-		operators.append(`operator`)
+    operators[`operator`.identifier] = `operator`
 	}
 
 	public func register(tag: Tag.Type)
@@ -310,7 +309,7 @@ open class Parser
 				return .nil
 			}
 
-			guard let operatorInstance = operators.first(where: { $0.identifier == operatorKeyword }) else
+      guard let operatorInstance = operators[operatorKeyword] else
 			{
 				parseErrors.append(ParseErrors.malformedExpression("Malformed expression: Unknown operator “\(operatorKeyword)”."))
 				return .nil
@@ -330,7 +329,7 @@ open class Parser
 
 			if let lastValue = lastParsedValue
 			{
-				let currentValue = operatorInstance.lambda(firstValue, secondValue)
+				let currentValue = operatorInstance.apply(firstValue, secondValue)
 				switch node
 				{
 				case "and":
@@ -346,7 +345,7 @@ open class Parser
 			}
 			else
 			{
-				lastParsedValue = operatorInstance.lambda(firstValue, secondValue)
+				lastParsedValue = operatorInstance.apply(firstValue, secondValue)
 			}
 		}
 
@@ -551,3 +550,4 @@ private struct TokenIterator
 		currentIndex = index
 	}
 }
+
