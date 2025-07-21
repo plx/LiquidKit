@@ -39,11 +39,18 @@ The library follows a classic three-phase template engine architecture:
 
 - **Token.swift**: Defines the value system (nil, bool, string, integer, decimal, array, dictionary, range)
 - **Context.swift**: Container for template variables and execution state
-- **Filter.swift**: Protocol and implementations for all Liquid filters
+- **Filter Protocol**: Protocol-based system for transforming values (as of latest refactoring)
+- **Individual Filter Implementations**: 47 separate filter structs in `Filters/` directory
 - **Tag.swift**: Base class and implementations for all Liquid tags
 - **Operator.swift**: Comparison and logical operators (==, !=, >, <, contains, etc.)
 
 ## Current State
+
+### Recent Architecture Changes
+- **Filter System** (Latest): Migrated from class-based to protocol-based architecture
+  - 47 built-in filters now implemented as individual structs conforming to `Filter` protocol
+  - Improved type safety and maintainability
+  - Each filter in its own file under `Filters/` directory
 
 ### Swift Version
 - **Swift 6** with strict concurrency checking enabled
@@ -106,7 +113,11 @@ LiquidKit/
 │   └── LiquidKit/
 │       ├── Lexer.swift       # Template tokenization
 │       ├── Parser.swift      # Token parsing and compilation  
-│       ├── Filter.swift      # All filter implementations + strftime formatter
+│       ├── Filters/          # Filter system (47 individual filter implementations)
+│       │   ├── Filter.swift  # Filter protocol definition
+│       │   ├── AbsFilter.swift
+│       │   ├── AppendFilter.swift
+│       │   └── ... (44 more filter implementations)
 │       ├── Tag.swift         # All tag implementations
 │       ├── Token.swift       # Value type system
 │       ├── Context.swift     # Variable storage and scope
@@ -143,6 +154,7 @@ Based on golden-liquid test suite analysis:
 3. **Filter Validation**: Extra filter arguments don't cause errors as they should
 4. **Range Output**: Range objects don't render properly when output directly
 5. **Error Handling**: Some edge cases don't match Liquid's strict error behavior
+6. **Filter Error Reporting**: Filter protocol now supports throwing errors, but not all filters validate inputs (e.g., division by zero should throw but currently returns nil)
 
 ### Other Limitations
 1. **Documentation**: Could benefit from more inline documentation and usage examples
@@ -210,6 +222,19 @@ Based on golden-liquid test suite analysis:
 - **Detailed Diagnostics**: Include all relevant context in test failure messages
 - **Lesson**: Comprehensive test suites reveal implementation gaps quickly and provide a clear roadmap
 
+### 10. Protocol-Based Architecture Migration
+- **Filter System Refactoring**: Successfully migrated from class-based to protocol-based filter system
+- **Type Annotations**: When converting classes to protocols, update all type annotations to use `any ProtocolName`
+- **Method Invocation**: Changed from closure property (`filter.lambda`) to protocol method (`filter.evaluate`)
+- **Parallel Migration Strategy**: For large-scale migrations (47 filters), use subagents for parallel processing
+- **Template Pattern**: Create one example implementation first to establish patterns before bulk migration
+- **File Organization**: Individual implementations in separate files improves maintainability and compilation
+- **Import Management**: Some filters need specific imports (Darwin for math, HTMLEntities for escaping)
+- **Testing Strategy**: Run individual filter tests during migration rather than full suite to avoid noise
+- **Error Handling Evolution**: Protocol now supports `throws`, enabling future error reporting improvements
+- **Backward Compatibility**: Protocol migration maintained 100% API compatibility - all tests passed unchanged
+- **Lesson**: Large architectural changes can be done safely with methodical approach and comprehensive testing
+
 ## Contributing Guidelines
 
 1. Maintain backward compatibility where possible
@@ -249,7 +274,7 @@ let output = renderer.render(nodes: nodes, context: context)
 
 ## Important Notes
 
-- **Thread Safety**: `Token`, `Lexer`, and filter/operator types are thread-safe. `Context` and `Parser` should be used on a single thread.
+- **Thread Safety**: `Token`, `Lexer`, all filter structs, and operator types are thread-safe. `Context` and `Parser` should be used on a single thread.
 - **Migration Path**: Projects using the old CocoaPods version can migrate by updating imports and switching to SPM
 - **Platform Requirements**: Requires iOS 13.0+, macOS 10.15+, or equivalent versions on other Apple platforms
 - **Swift Version**: Requires Swift 6.0 or later with strict concurrency checking

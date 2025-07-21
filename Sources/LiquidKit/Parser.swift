@@ -13,7 +13,7 @@ open class Parser
 {
 	private var tokens: [Token]
 	private let context: Context
-  private var filters: [String:Filter] = .builtInFilters
+  private var filters: [String: any Filter] = .builtInFilters
   private var operators: [String: any Operator] = [String: any Operator].builtInOperators
 	private var tags: [String: [Tag.Type]] = [:]
 	private var parseErrors: [Error] = []
@@ -47,7 +47,7 @@ open class Parser
 		try preprocessTokens().compile(using: self) ?? []
 	}
 
-	public func register(filter: Filter)
+	public func register(filter: any Filter)
 	{
     filters[filter.identifier] = filter
 	}
@@ -207,7 +207,7 @@ open class Parser
 				return filteredValue
 			}
 
-			filteredValue = try filter.lambda(filteredValue, filterParameters ?? [])
+			filteredValue = try filter.evaluate(token: filteredValue, parameters: filterParameters ?? [])
 		}
 
 		return filteredValue
