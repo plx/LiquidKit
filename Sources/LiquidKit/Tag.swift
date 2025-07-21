@@ -190,12 +190,16 @@ open class Tag {
   public enum Errors: Error {
     case malformedStatement(String)
     case missingArtifacts
+    case invalidInvocation(String)
 
     var localizedDescription: String {
       switch self {
-      case .malformedStatement(let description): return description
+      case .malformedStatement(let description):
+        description
       case .missingArtifacts:
-        return "Compiler error: Compilaton reported success but required artifacts are missing."
+        "Compiler error: Compilaton reported success but required artifacts are missing."
+      case .invalidInvocation(let description):
+        description
       }
     }
   }
@@ -650,6 +654,11 @@ class TagFor: Tag, IterationTag {
     }
 
     if let limit = (compiledExpression["limit"] as? Token.Value)?.integerValue {
+      guard values.indices.contains(limit) else {
+        throw Errors.invalidInvocation(
+          "Calculated out-of-range `limit` \(limit) for \(self), cannot finish evaluation!"
+        )
+      }
       values.removeSubrange(limit...)
     }
 

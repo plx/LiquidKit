@@ -9,7 +9,10 @@ struct GoldenLiquidValidationTests {
   // MARK: - Helper Methods
   
   /// Renders a template with the given context and validates it matches the expected outcome
-  private func validateTestCase(_ testCase: GoldenLiquidTestCase) throws {
+  private func validateTestCase(
+    _ testCase: GoldenLiquidTestCase,
+    sourceLocation: Testing.SourceLocation = #_sourceLocation
+  ) throws {
     do {
       // Create lexer and parse the template
       let lexer = Lexer(templateString: testCase.template)
@@ -41,20 +44,47 @@ struct GoldenLiquidValidationTests {
       // Validate the output
       switch testCase.outcome {
       case .singleResult(let expected):
-        if output != expected {
-          throw TestError.wrongOutput(expected: expected, actual: output)
-        }
+        #expect(
+          expected == output,
+          """
+          Expected `\(expected)` but got `\(output)` for golden-liquid test case \(testCase.name).
+          
+          - `testCase.name`: \(testCase.name)
+          - `testCase.template`: \(testCase.template)
+          - `observed`: \(output)
+          - `expected`: \(expected)
+          """,
+          sourceLocation: sourceLocation
+        )
         
       case .multipleResults(let acceptableResults):
-        if !acceptableResults.contains(output) {
-          throw TestError.wrongOutput(expected: acceptableResults.joined(separator: " | "), actual: output)
-        }
+        try #require(!acceptableResults.isEmpty)
+        #expect(
+          acceptableResults.contains(output),
+          """
+          Output `\(output)` not any of the acceptable choices for golden-liquid test case \(testCase.name).
+          
+          - `testCase.name`: \(testCase.name)
+          - `testCase.template`: \(testCase.template)
+          - `observed`: \(output)
+          - `expected`: 
+            - \(acceptableResults.joined(separator: "\n  - "))
+          """,
+          sourceLocation: sourceLocation
+        )
         
       case .invalid:
-        throw TestError.expectedFailure("Test case marked as invalid but didn't throw")
+        #expect(
+          (false),
+          """
+          We expected this test to fail, but it didn't wind up throwing an error for golden-liquid test case \(testCase.name).
+          
+          - `testCase.name`: \(testCase.name)
+          - `testCase.template`: \(testCase.template)
+          """,
+          sourceLocation: sourceLocation
+        )
       }
-    } catch let error as TestError {
-      throw error
     } catch {
       // For tests that should fail, any error is success
       if testCase.shouldFail {

@@ -1,4 +1,5 @@
 import Foundation
+import Testing
 @testable import LiquidKit
 
 /// Error types for Golden Liquid test loading
@@ -278,6 +279,14 @@ struct GoldenLiquidTestCase: Codable {
     }
 }
 
+// MARK: - Conformances
+
+extension GoldenLiquidTestCase: CustomTestStringConvertible {
+  public var testDescription: String {
+    return "\(name): `\(template)`"
+  }
+}
+
 // MARK: - Convenience Methods
 
 extension GoldenLiquidTestCase {
@@ -364,13 +373,6 @@ extension GoldenLiquidTestCase {
     /// Checks if this test case has a specific tag
     func hasTag(_ tag: String) -> Bool {
         tags?.contains(tag) ?? false
-    }
-    
-    /// Returns a description suitable for test naming
-    var testDescription: String {
-        // Replace non-alphanumeric characters with underscores for valid test names
-        let sanitized = name.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "_", options: .regularExpression)
-        return "testGoldenLiquid_\(sanitized)"
     }
 }
 
