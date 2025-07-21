@@ -1,11 +1,15 @@
 import Foundation
 
-public struct ConcatFilter: Filter {
-    public static let filterIdentifier = "concat"
+@usableFromInline
+package struct ConcatFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "concat"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .array(let array) = token else {
             return token
         }

@@ -1,11 +1,15 @@
 import Foundation
 
-public struct TruncateFilter: Filter {
-    public static let filterIdentifier = "truncate"
+@usableFromInline
+package struct TruncateFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "truncate"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .string(let string) = token else {
             return token
         }

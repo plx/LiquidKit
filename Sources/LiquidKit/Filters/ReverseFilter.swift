@@ -1,11 +1,15 @@
 import Foundation
 
-public struct ReverseFilter: Filter {
-    public static let filterIdentifier = "reverse"
+@usableFromInline
+package struct ReverseFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "reverse"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         switch token {
         case .array(let array):
             return .array(array.reversed())

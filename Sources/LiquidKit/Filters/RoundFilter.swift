@@ -1,10 +1,16 @@
 import Foundation
 import Darwin
 
-struct RoundFilter: Filter {
-  static let filterIdentifier = "round"
+@usableFromInline
+package struct RoundFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "round"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     guard let value = token.doubleValue else {
       return .nil
     }

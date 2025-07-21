@@ -1,11 +1,15 @@
 import Foundation
 
-public struct ReplaceFilter: Filter {
-    public static let filterIdentifier = "replace"
+@usableFromInline
+package struct ReplaceFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "replace"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .string(let string) = token else {
             return token
         }

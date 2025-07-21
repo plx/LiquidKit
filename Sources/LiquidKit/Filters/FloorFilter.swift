@@ -1,10 +1,16 @@
 import Foundation
 import Darwin
 
-struct FloorFilter: Filter {
-  static let filterIdentifier = "floor"
+@usableFromInline
+package struct FloorFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "floor"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     guard let inputDouble = token.doubleValue else {
       return .nil
     }

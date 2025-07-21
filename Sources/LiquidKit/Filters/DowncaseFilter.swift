@@ -1,11 +1,15 @@
 import Foundation
 
-struct DowncaseFilter: Filter {
-    static let filterIdentifier = "downcase"
+@usableFromInline
+package struct DowncaseFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "downcase"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .string(let inputString) = token else {
             return .nil
         }

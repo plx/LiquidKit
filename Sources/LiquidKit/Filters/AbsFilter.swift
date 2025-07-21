@@ -1,11 +1,15 @@
 import Foundation
 
-struct AbsFilter: Filter {
-    static let filterIdentifier = "abs"
+@usableFromInline
+package struct AbsFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "abs"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard let decimal = token.decimalValue else {
             return .nil
         }

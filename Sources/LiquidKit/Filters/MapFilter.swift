@@ -1,11 +1,15 @@
 import Foundation
 
-public struct MapFilter: Filter {
-    public static let filterIdentifier = "map"
+@usableFromInline
+package struct MapFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "map"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .array(let array) = token else {
             return token
         }

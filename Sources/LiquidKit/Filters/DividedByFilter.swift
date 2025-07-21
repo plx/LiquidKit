@@ -1,12 +1,16 @@
 import Foundation
 import Darwin
 
-struct DividedByFilter: Filter {
-    static let filterIdentifier = "divided_by"
+@usableFromInline
+package struct DividedByFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "divided_by"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard let dividendDouble = token.doubleValue, let divisor = parameters.first else {
             return .nil
         }

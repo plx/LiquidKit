@@ -1,11 +1,15 @@
 import Foundation
 
-public struct LastFilter: Filter {
-    public static let filterIdentifier = "last"
+@usableFromInline
+package struct LastFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "last"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         switch token {
         case .array(let array):
             return array.last ?? .nil

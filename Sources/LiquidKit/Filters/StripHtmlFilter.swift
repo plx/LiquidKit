@@ -1,11 +1,15 @@
 import Foundation
 
-public struct StripHtmlFilter: Filter {
-    public static let filterIdentifier = "strip_html"
+@usableFromInline
+package struct StripHtmlFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "strip_html"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .string(let string) = token else {
             return token
         }

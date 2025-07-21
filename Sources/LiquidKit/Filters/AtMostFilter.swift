@@ -1,11 +1,15 @@
 import Foundation
 
-struct AtMostFilter: Filter {
-    static let filterIdentifier = "at_most"
+@usableFromInline
+package struct AtMostFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "at_most"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard
             let inputDecimal = token.decimalValue,
             let parameterDecimal = parameters.first?.decimalValue

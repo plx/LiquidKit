@@ -1,9 +1,15 @@
 import Foundation
 
-struct DateFilter: Filter {
-  static let filterIdentifier = "date"
+@usableFromInline
+package struct DateFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "date"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @usableFromInline
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     // Get the format parameter (required)
     guard !parameters.isEmpty else {
       return .string("")

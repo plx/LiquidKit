@@ -1,9 +1,15 @@
 import Foundation
 
-struct SliceFilter: Filter {
-  static let filterIdentifier = "slice"
+@usableFromInline
+package struct SliceFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "slice"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     guard !parameters.isEmpty else {
       return token
     }

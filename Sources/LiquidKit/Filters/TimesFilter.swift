@@ -1,9 +1,15 @@
 import Foundation
 
-struct TimesFilter: Filter {
-  static let filterIdentifier = "times"
+@usableFromInline
+package struct TimesFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "times"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     guard !parameters.isEmpty else {
       return token
     }

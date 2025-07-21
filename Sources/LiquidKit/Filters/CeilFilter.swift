@@ -1,12 +1,16 @@
 import Foundation
 import Darwin
 
-struct CeilFilter: Filter {
-    static let filterIdentifier = "ceil"
+@usableFromInline
+package struct CeilFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "ceil"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard let inputDouble = token.doubleValue else {
             return .nil
         }

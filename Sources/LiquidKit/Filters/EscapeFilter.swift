@@ -1,12 +1,16 @@
 import Foundation
 import HTMLEntities
 
-struct EscapeFilter: Filter {
-    static let filterIdentifier = "escape"
+@usableFromInline
+package struct EscapeFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "escape"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         return .string(token.stringValue.htmlEscape(decimal: true, useNamedReferences: true))
     }
 }

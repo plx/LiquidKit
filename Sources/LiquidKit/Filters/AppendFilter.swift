@@ -1,11 +1,15 @@
 import Foundation
 
-struct AppendFilter: Filter {
-    static let filterIdentifier = "append"
+@usableFromInline
+package struct AppendFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "append"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard let stringParameter = parameters.first?.stringValue else
         {
             return .nil

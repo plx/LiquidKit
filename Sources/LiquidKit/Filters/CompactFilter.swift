@@ -1,11 +1,15 @@
 import Foundation
 
-public struct CompactFilter: Filter {
-    public static let filterIdentifier = "compact"
+@usableFromInline
+package struct CompactFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "compact"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .array(let array) = token else {
             return token
         }

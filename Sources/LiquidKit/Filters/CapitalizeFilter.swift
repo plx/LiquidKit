@@ -1,11 +1,15 @@
 import Foundation
 
-struct CapitalizeFilter: Filter {
-    static let filterIdentifier = "capitalize"
+@usableFromInline
+package struct CapitalizeFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "capitalize"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         let inputString = token.stringValue
         
         guard inputString.count > 0 else {

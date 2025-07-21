@@ -1,9 +1,15 @@
 import Foundation
 
-struct ModuloFilter: Filter {
-  static let filterIdentifier = "modulo"
+@usableFromInline
+package struct ModuloFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "modulo"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     guard !parameters.isEmpty else {
       return token
     }

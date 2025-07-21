@@ -1,11 +1,15 @@
 import Foundation
 
-struct LstripFilter: Filter {
-    static let filterIdentifier = "lstrip"
+@usableFromInline
+package struct LstripFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "lstrip"
     
-    init() {}
+    @inlinable
+    package init() {}
     
-    func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         guard case .string(let inputString) = token else {
             return .nil
         }

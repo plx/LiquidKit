@@ -1,11 +1,15 @@
 import Foundation
 
-public struct SizeFilter: Filter {
-    public static let filterIdentifier = "size"
+@usableFromInline
+package struct SizeFilter: Filter {
+    @usableFromInline
+    package static let filterIdentifier = "size"
     
-    public init() {}
+    @inlinable
+    package init() {}
     
-    public func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    @inlinable
+    package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         switch token {
         case .array(let array):
             return .integer(array.count)

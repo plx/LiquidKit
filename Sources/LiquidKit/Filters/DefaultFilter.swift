@@ -1,9 +1,15 @@
 import Foundation
 
-struct DefaultFilter: Filter {
-  static let filterIdentifier = "default"
+@usableFromInline
+package struct DefaultFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "default"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     // If the value is nil, empty string, or false, return the default value
     switch token {
     case .nil:

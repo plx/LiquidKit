@@ -1,9 +1,15 @@
 import Foundation
 
-struct PlusFilter: Filter {
-  static let filterIdentifier = "plus"
+@usableFromInline
+package struct PlusFilter: Filter {
+  @usableFromInline
+  package static let filterIdentifier = "plus"
   
-  func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+  @inlinable
+  package init() {}
+  
+  @inlinable
+  package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
     guard !parameters.isEmpty else {
       return token
     }
