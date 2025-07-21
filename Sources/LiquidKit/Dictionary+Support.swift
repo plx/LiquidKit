@@ -1,21 +1,4 @@
 
-extension Dictionary where Value: AdditiveArithmetic {
-  
-  @inlinable
-  @discardableResult
-  package mutating func adjustValue(
-    forKey key: Key,
-    by amount: Value,
-    default: @autoclosure () -> Value = .zero
-  ) -> Value {
-    let existingValue: Value = self[key, default: `default`()]
-    let newValue: Value = existingValue + amount
-    self[key] = newValue
-    return newValue
-  }
-  
-}
-
 extension Dictionary where Value: AdditiveArithmetic & ExpressibleByIntegerLiteral {
   
   @inlinable
@@ -23,7 +6,14 @@ extension Dictionary where Value: AdditiveArithmetic & ExpressibleByIntegerLiter
   package mutating func incrementValue(
     forKey key: Key,
   ) -> Value {
-    adjustValue(forKey: key, by: 1)
+    switch self[key] {
+    case .some(let value):
+      self[key] = value + 1
+      return value
+    case .none:
+      self[key] = 1
+      return 0
+    }
   }
 
   @inlinable
@@ -31,7 +21,9 @@ extension Dictionary where Value: AdditiveArithmetic & ExpressibleByIntegerLiter
   package mutating func decrementValue(
     forKey key: Key,
   ) -> Value {
-    adjustValue(forKey: key, by: -1)
+    let value = self[key, default: 0] - 1
+    self[key] = value
+    return value
   }
 
 }

@@ -1,24 +1,13 @@
-//
-//  Lexer.swift
-//  Liquid
-//
-//  Created by YourtionGuo on 28/06/2017.
-//
-//
-
 import Foundation
 
-public struct Lexer: Sendable
-{
+public struct Lexer: Sendable {
 	let templateString: String
 	
-	public init(templateString: String)
-	{
+	public init(templateString: String) {
 		self.templateString = templateString
 	}
 	
-	func createToken(string: String) -> Token
-	{
+	func createToken(string: String) -> Token {
 		var stripped: String
 		{
 			let start = string.index(string.startIndex, offsetBy: 2)

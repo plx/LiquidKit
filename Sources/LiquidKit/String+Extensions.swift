@@ -9,7 +9,11 @@ extension String {
   
   @inlinable
   package func findLastNot(character: Character) -> String.Index? {
-    lastIndex { $0 != character }
+    guard let naivelastIndex = lastIndex(where: { $0 != character }) else {
+      return nil
+    }
+    
+    return index(after: naivelastIndex)
   }
   
   @inlinable

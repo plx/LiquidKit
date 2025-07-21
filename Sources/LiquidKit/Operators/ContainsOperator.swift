@@ -4,11 +4,12 @@ public struct ContainsOperator: Operator {
   public static let operatorIdentifier: String = "contains"
   
   public func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value {
-    if case .array(let array) = lhs, case .string(let string) = rhs {
+    switch (lhs, rhs) {
+    case (.array(let array), .string(let string)):
       .bool(array.contains(.string(string)))
-    } else if case .string(let haystack) = lhs, case .string(let needle) = rhs {
+    case (.string(let haystack), .string(let needle)):
       .bool(haystack.contains(needle))
-    } else {
+    default:
       .bool(false)
     }
   }

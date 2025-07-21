@@ -10,32 +10,16 @@ public protocol Operator: Sendable {
 
 extension Operator {
   
+  @inlinable
   public var identifier: String {
     Self.operatorIdentifier
   }
 }
 
-
-
-/// A class modeling an infix operator
-//open class Operator: @unchecked Sendable
-//{
-//  /// Keyword used to identify the filter.
-//  let identifier: String
-//
-//  /// Function that transforms the input string.
-//  let lambda: ((Token.Value, Token.Value) -> Token.Value)
-//
-//  /// Filter constructor.
-//  init(identifier: String, lambda: @escaping @Sendable (Token.Value, Token.Value) -> Token.Value) {
-//    self.identifier = identifier
-//    self.lambda = lambda
-//  }
-//}
-
 extension [String: any Operator] {
   
-  static var builtInOperators: Self {
+  @usableFromInline
+  package static var builtInOperators: Self {
     Self(
       uniqueKeysWithValues: ([
         EqualsOperator(),

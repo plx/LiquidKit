@@ -53,21 +53,16 @@ open class Parser
 		filters.append(filter)
 	}
 
-	public func register(operator: some Operator)
-	{
+	public func register(operator: any Operator) {
     operators[`operator`.identifier] = `operator`
 	}
 
 	public func register(tag: Tag.Type)
 	{
-		if tags[tag.keyword] == nil
-		{
-			tags[tag.keyword] = [tag]
-		}
-		else
-		{
-			tags[tag.keyword]?.append(tag)
-		}
+    tags[
+      tag.keyword,
+      default: []
+    ].append(tag)
 	}
 
 	/// This method will traverse the provided tokens (which is a linear structure) and create a scoped (nested) data
