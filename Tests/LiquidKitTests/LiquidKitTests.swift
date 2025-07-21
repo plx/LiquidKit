@@ -14,13 +14,13 @@ import Foundation
 #endif
 
 class LiquidTests: XCTestCase {
-  func testLexer() {
+  func testLexer() throws {
     LexerTests().testCreateToken()
     LexerTests().testTokenize()
   }
-  func testParser()  {
-    ParserTests().testParseText()
-    ParserTests().testParseVariable()
+  func testParser() throws {
+    try ParserTests().testParseText()
+    try ParserTests().testParseVariable()
   }
 
 }

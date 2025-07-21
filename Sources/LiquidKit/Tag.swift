@@ -100,7 +100,7 @@ open class Tag {
         {
           // This parameter has a value, so we parse that value and assign it to the keyword.
           let value = String(parameterStatement[valueRange])
-          compiledExpression[parameter] = parser.compileFilter(value, context: context)
+          compiledExpression[parameter] = try parser.compileFilter(value, context: context)
         } else {
           // This parameter is just a keyword with no value, so we just assign true to it.
           compiledExpression[parameter] = Token.Value.bool(true)
@@ -144,7 +144,7 @@ open class Tag {
           throw Errors.malformedStatement("Expected identifier or literal, found nothing.")
         }
 
-        compiledExpression[name] = parser.compileFilter(scanner.scanUntilEnd(), context: context)
+        compiledExpression[name] = try parser.compileFilter(scanner.scanUntilEnd(), context: context)
 
       case .group(let name):
         guard !scanner.isEmpty else {

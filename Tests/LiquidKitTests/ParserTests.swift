@@ -11,34 +11,41 @@ import XCTest
 
 class ParserTests: XCTestCase {
     
-    func testParseText() {
+    func testParseText() throws {
         let lexer = Lexer(templateString: "aab  cc dd")
         let tokens = lexer.tokenize()
         let parser = Parser(tokens: tokens, context: Context())
-        let res = parser.parse()
+        let res = try parser.parse()
         XCTAssertEqual(res, ["aab  cc dd"])
     }
     
-    func testParseVariable() {
+    func testParseVariable() throws {
         let dic = ["a": "A", "b": "BB", "c": "CCcCC"]
         let lexer = Lexer(templateString: "aab {{ a }} {{b}}c{{c}} d")
         let tokens = lexer.tokenize()
         let parser = Parser(tokens: tokens, context: Context(dictionary: dic))
-        let res = parser.parse()
+        let res = try parser.parse()
         XCTAssertEqual(res, ["aab ", "A", " ","BB","c", "CCcCC"," d"])
     }
     
-    func testParseVariablePerformance() {
+    func testParseVariablePerformance() throws {
         let dic = ["a": "A", "b": "BB", "c": "CCcCC"]
         let lexer = Lexer(templateString: "aab {{ a }} {{b}}c{{c}} d")
         let tokens = lexer.tokenize()
         let parser = Parser(tokens: tokens, context: Context(dictionary: dic))
         measure {
-            _ = parser.parse()
+          do {
+            _ = try parser.parse()
+          }
+          catch let error {
+            XCTFail(
+              "Unexpected error while measuring: \(String(reflecting: error))!"
+            )
+          }
         }
     }
 
-	func testParseObject()
+	func testParseObject() throws
 	{
 		struct User: TokenValueConvertible
 		{
@@ -65,8 +72,17 @@ class ParserTests: XCTestCase {
 		var res: [String]? = nil
 		measure
 		{
-			res = parser.parse()
+      do {
+        res = try parser.parse()
+      }
+      catch let error {
+        XCTFail("Unexpected failure while measuring expression: \(String(reflecting: error))!")
+      }
 		}
-		XCTAssertEqual(res, ["John", "2", "Sarah", "1", "sarah@example.com", "john@example.com", "1"])
+    let result = try XCTUnwrap(res)
+		XCTAssertEqual(
+      result,
+      ["John", "2", "Sarah", "1", "sarah@example.com", "john@example.com", "1"]
+    )
 	}
 }

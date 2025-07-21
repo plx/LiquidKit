@@ -43,9 +43,9 @@ open class Parser
 	}
 
 	/// Parse the given tokens into nodes
-	public func parse() -> [String]
+	public func parse() throws -> [String]
 	{
-		return preprocessTokens().compile(using: self) ?? []
+		try preprocessTokens().compile(using: self) ?? []
 	}
 
 	public func register(filter: Filter)
@@ -67,7 +67,7 @@ open class Parser
 
 	/// This method will traverse the provided tokens (which is a linear structure) and create a scoped (nested) data
 	/// structure of the code, so that it can be compiled later.
-	private func preprocessTokens() -> Scope
+	private func preprocessTokens() throws -> Scope
 	{
 		var tokenIterator = TokenIterator(tokens)
 
@@ -82,7 +82,12 @@ open class Parser
 				currentScope.append(rawOutput: contents)
 
 			case .variable(let contents) where currentScope.outputState == .enabled:
-				currentScope.append(rawOutput: compileFilter(contents, context: currentScope.context).stringValue)
+				currentScope.append(
+          rawOutput: try compileFilter(
+            contents,
+            context: currentScope.context
+          ).stringValue)
+        
 
 			case .tag(let contents):
 				guard let tag = compileTag(contents, currentScope: currentScope) else
@@ -153,7 +158,7 @@ open class Parser
 		return rootScope
 	}
 
-	internal func compileFilter(_ statement: String, context inputContext: Context? = nil) -> Token.Value
+	internal func compileFilter(_ statement: String, context inputContext: Context? = nil) throws -> Token.Value
 	{
 		let context = inputContext ?? self.context
 		let splitStatement = statement.split(separator: "|")
@@ -203,7 +208,7 @@ open class Parser
 				return filteredValue
 			}
 
-			filteredValue = filter.lambda(filteredValue, filterParameters ?? [])
+			filteredValue = try filter.lambda(filteredValue, filterParameters ?? [])
 		}
 
 		return filteredValue

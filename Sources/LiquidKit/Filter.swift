@@ -13,11 +13,13 @@ open class Filter: @unchecked Sendable
 	let identifier: String
 
 	/// Function that transforms the input string.
-	let lambda: ((Token.Value, [Token.Value]) -> Token.Value)
+	let lambda: ((Token.Value, [Token.Value]) throws -> Token.Value)
 
 	/// Filter constructor.
-	public init(identifier: String, lambda: @escaping @Sendable (Token.Value, [Token.Value]) -> Token.Value)
-	{
+	public init(
+    identifier: String,
+    lambda: @escaping @Sendable (Token.Value, [Token.Value]) throws -> Token.Value
+  ) {
 		self.identifier = identifier
 		self.lambda = lambda
 	}

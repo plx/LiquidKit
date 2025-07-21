@@ -33,7 +33,7 @@ struct GoldenLiquidValidationTests {
       }
       
       // Parse the template
-      let parts = parser.parse()
+      let parts = try parser.parse()
       
       // Render the template by joining all parts
       let output = parts.joined()
