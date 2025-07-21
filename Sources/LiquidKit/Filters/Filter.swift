@@ -34,6 +34,10 @@ extension [String: any Filter]
       AppendFilter(),
       AtLeastFilter(),
       AtMostFilter(),
+      Base64DecodeFilter(),
+      Base64EncodeFilter(),
+      Base64UrlSafeDecodeFilter(),
+      Base64UrlSafeEncodeFilter(),
       CapitalizeFilter(),
       CeilFilter(),
       CompactFilter(),
@@ -45,6 +49,8 @@ extension [String: any Filter]
       EscapeFilter(),
       EscapeOnceFilter(),
       FirstFilter(),
+      FindFilter(),
+      FindIndexFilter(),
       FloorFilter(),
       JoinFilter(),
       LastFilter(),
@@ -57,6 +63,7 @@ extension [String: any Filter]
       PrependFilter(),
       RemoveFilter(),
       RemoveFirstFilter(),
+      RejectFilter(),
       ReplaceFilter(),
       ReplaceFirstFilter(),
       ReverseFilter(),
@@ -76,7 +83,8 @@ extension [String: any Filter]
       UniqFilter(),
       UpcaseFilter(),
       UrlDecodeFilter(),
-      UrlEncodeFilter()
+      UrlEncodeFilter(),
+      WhereFilter()
     ] as [any Filter]).map { filter in (filter.identifier, filter) }
   )
 }

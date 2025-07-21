@@ -51,6 +51,42 @@ class FilterTests: XCTestCase
 		XCTAssertEqual(res, ["4", "3"])
 	}
 	
+	func testFilter_base64Decode() throws
+	{
+		let lexer = Lexer(templateString: "{{ \"SGVsbG8gV29ybGQ=\" | base64_decode }}{{ \"invalid base64\" | base64_decode }}")
+		let tokens = lexer.tokenize()
+		let parser = Parser(tokens: tokens, context: Context())
+		let res = try parser.parse()
+		XCTAssertEqual(res, ["Hello World", ""])
+	}
+	
+	func testFilter_base64Encode() throws
+	{
+		let lexer = Lexer(templateString: "{{ \"Hello World\" | base64_encode }}")
+		let tokens = lexer.tokenize()
+		let parser = Parser(tokens: tokens, context: Context())
+		let res = try parser.parse()
+		XCTAssertEqual(res, ["SGVsbG8gV29ybGQ="])
+	}
+	
+	func testFilter_base64UrlSafeDecode() throws
+	{
+		let lexer = Lexer(templateString: "{{ \"SGVsbG8gV29ybGQ\" | base64_url_safe_decode }}{{ \"dGVzdC1zdHJpbmc_Pz8\" | base64_url_safe_decode }}")
+		let tokens = lexer.tokenize()
+		let parser = Parser(tokens: tokens, context: Context())
+		let res = try parser.parse()
+		XCTAssertEqual(res, ["Hello World", "test-string???"])
+	}
+	
+	func testFilter_base64UrlSafeEncode() throws
+	{
+		let lexer = Lexer(templateString: "{{ \"Hello World\" | base64_url_safe_encode }}{{ \"test-string???\" | base64_url_safe_encode }}")
+		let tokens = lexer.tokenize()
+		let parser = Parser(tokens: tokens, context: Context())
+		let res = try parser.parse()
+		XCTAssertEqual(res, ["SGVsbG8gV29ybGQ", "dGVzdC1zdHJpbmc_Pz8"])
+	}
+	
 	func testFilter_capitalize() throws
 	{
 		let lexer = Lexer(templateString: "{{ \"title\" | capitalize }}{{ \"my great title\" | capitalize }}")
@@ -215,6 +251,91 @@ class FilterTests: XCTestCase
 		XCTAssertEqual(res, ["4"])
 	}
 
+	func testFilter_find() throws
+	{
+		let values: [String: Token.Value] = [
+			"products": .array([
+				.dictionary(["title": .string("Product 1"), "available": .bool(false), "type": .string("shoes")]),
+				.dictionary(["title": .string("Product 2"), "available": .bool(true), "type": .string("shirt")]),
+				.dictionary(["title": .string("Product 3"), "available": .bool(true), "type": .string("shoes")]),
+			])
+		]
+		
+		// Test finding by truthy property - returns the found dictionary item
+		let lexer1 = Lexer(templateString: "{{ products | find: \"available\" }}")
+		let tokens1 = lexer1.tokenize()
+		let parser1 = Parser(tokens: tokens1, context: Context(dictionary: values))
+		let res1 = try parser1.parse()
+		XCTAssertEqual(res1, [""]) // Dictionaries render as empty strings
+		
+		// Test finding by property value
+		let lexer2 = Lexer(templateString: "{{ products | find: \"type\", \"shoes\" }}")
+		let tokens2 = lexer2.tokenize()
+		let parser2 = Parser(tokens: tokens2, context: Context(dictionary: values))
+		let res2 = try parser2.parse()
+		XCTAssertEqual(res2, [""]) // Dictionaries render as empty strings
+		
+		// Test finding when no match exists
+		let lexer3 = Lexer(templateString: "{{ products | find: \"type\", \"pants\" }}")
+		let tokens3 = lexer3.tokenize()
+		let parser3 = Parser(tokens: tokens3, context: Context(dictionary: values))
+		let res3 = try parser3.parse()
+		XCTAssertEqual(res3, [""]) // nil renders as empty string
+		
+		// Test with simple array
+		let lexer4 = Lexer(templateString: "{{ array | find: \"cat\" }}")
+		let tokens4 = lexer4.tokenize()
+		let parser4 = Parser(tokens: tokens4, context: Context(dictionary: ["array": .array([.string("dog"), .string("cat"), .string("bird")])]))
+		let res4 = try parser4.parse()
+		XCTAssertEqual(res4, ["cat"])
+	}
+
+	func testFilter_find_index() throws
+	{
+		let values: [String: Token.Value] = [
+			"products": .array([
+				.dictionary(["title": .string("Product 1"), "available": .bool(false), "type": .string("shoes")]),
+				.dictionary(["title": .string("Product 2"), "available": .bool(true), "type": .string("shirt")]),
+				.dictionary(["title": .string("Product 3"), "available": .bool(true), "type": .string("shoes")]),
+			])
+		]
+		
+		// Test finding index by truthy property
+		let lexer1 = Lexer(templateString: "{{ products | find_index: \"available\" }}")
+		let tokens1 = lexer1.tokenize()
+		let parser1 = Parser(tokens: tokens1, context: Context(dictionary: values))
+		let res1 = try parser1.parse()
+		XCTAssertEqual(res1, ["1"]) // Index of first product where available is truthy
+		
+		// Test finding index by property value
+		let lexer2 = Lexer(templateString: "{{ products | find_index: \"type\", \"shoes\" }}")
+		let tokens2 = lexer2.tokenize()
+		let parser2 = Parser(tokens: tokens2, context: Context(dictionary: values))
+		let res2 = try parser2.parse()
+		XCTAssertEqual(res2, ["0"]) // Index of first product with type "shoes"
+		
+		// Test finding index when no match exists
+		let lexer3 = Lexer(templateString: "{{ products | find_index: \"type\", \"pants\" }}")
+		let tokens3 = lexer3.tokenize()
+		let parser3 = Parser(tokens: tokens3, context: Context(dictionary: values))
+		let res3 = try parser3.parse()
+		XCTAssertEqual(res3, [""]) // nil renders as empty string
+		
+		// Test with simple array
+		let lexer4 = Lexer(templateString: "{{ array | find_index: \"cat\" }}")
+		let tokens4 = lexer4.tokenize()
+		let parser4 = Parser(tokens: tokens4, context: Context(dictionary: ["array": .array([.string("dog"), .string("cat"), .string("bird")])]))
+		let res4 = try parser4.parse()
+		XCTAssertEqual(res4, ["1"]) // Index of "cat" in array
+		
+		// Test substring matching
+		let lexer5 = Lexer(templateString: "{{ array | find_index: \"oo\" }}")
+		let tokens5 = lexer5.tokenize()
+		let parser5 = Parser(tokens: tokens5, context: Context(dictionary: ["array": .array([.string("x"), .string("y"), .string("zoo")])]))
+		let res5 = try parser5.parse()
+		XCTAssertEqual(res5, ["2"]) // Index of "zoo" which contains "oo"
+	}
+
 	func testFilter_floor() throws
 	{
 		let lexer = Lexer(templateString: "{{ 1.2 | floor }}{{ 2.0 | floor }}{{ 183.357 | floor }}{{ \"3.5\" | floor }}")
@@ -322,6 +443,55 @@ class FilterTests: XCTestCase
 		let parser = Parser(tokens: tokens, context: Context())
 		let res = try parser.parse()
 		XCTAssertEqual(res, ["I sted to see the train through the rain"])
+	}
+
+	func testFilter_reject() throws
+	{
+		let values: [String: Token.Value] = [
+			"products": .array([
+				.dictionary(["title": .string("Product 1"), "available": .bool(true), "type": .string("shoes")]),
+				.dictionary(["title": .string("Product 2"), "available": .bool(false), "type": .string("shirt")]),
+				.dictionary(["title": .string("Product 3"), "available": .bool(true), "type": .string("shoes")]),
+				.dictionary(["title": .string("Product 4"), "type": .string("shirt")])
+			]),
+			"strings": .array([.string("x"), .string("y"), .string("cat")])
+		]
+
+		// Test rejecting by truthy property
+		let lexer1 = Lexer(templateString: "{{ products | reject: \"available\" | map: \"title\" | join: \", \" }}")
+		let tokens1 = lexer1.tokenize()
+		let parser1 = Parser(tokens: tokens1, context: Context(dictionary: values))
+		let res1 = try parser1.parse()
+		XCTAssertEqual(res1, ["Product 2, Product 4"])
+
+		// Test rejecting by property value
+		let lexer2 = Lexer(templateString: "{{ products | reject: \"type\", \"shoes\" | map: \"title\" | join: \", \" }}")
+		let tokens2 = lexer2.tokenize()
+		let parser2 = Parser(tokens: tokens2, context: Context(dictionary: values))
+		let res2 = try parser2.parse()
+		XCTAssertEqual(res2, ["Product 2, Product 4"])
+
+		// Test rejecting strings from array
+		let lexer3 = Lexer(templateString: "{{ strings | reject: \"cat\" | join: \", \" }}")
+		let tokens3 = lexer3.tokenize()
+		let parser3 = Parser(tokens: tokens3, context: Context(dictionary: values))
+		let res3 = try parser3.parse()
+		XCTAssertEqual(res3, ["x, y"])
+
+		// Test string input becomes single element array
+		let values2: [String: Token.Value] = ["s": .string("foo")]
+		let lexer4 = Lexer(templateString: "{{ s | reject: \"bar\" | join: \", \" }}")
+		let tokens4 = lexer4.tokenize()
+		let parser4 = Parser(tokens: tokens4, context: Context(dictionary: values2))
+		let res4 = try parser4.parse()
+		XCTAssertEqual(res4, ["foo"])
+		
+		// Test string input gets rejected when matching
+		let lexer5 = Lexer(templateString: "{{ s | reject: \"foo\" | join: \", \" }}")
+		let tokens5 = lexer5.tokenize()
+		let parser5 = Parser(tokens: tokens5, context: Context(dictionary: values2))
+		let res5 = try parser5.parse()
+		XCTAssertEqual(res5, [""])
 	}
 
 	func testFilter_replace() throws
@@ -511,5 +681,39 @@ class FilterTests: XCTestCase
 		let parser = Parser(tokens: tokens, context: Context())
 		let res = try parser.parse()
 		XCTAssertEqual(res, ["john%40liquid.com", "Tetsuro+Takara"])
+	}
+
+	func testFilter_where() throws
+	{
+		let values: [String: Token.Value] = [
+			"products": .array([
+				.dictionary(["title": .string("Product 1"), "available": .bool(true), "type": .string("shoes")]),
+				.dictionary(["title": .string("Product 2"), "available": .bool(false), "type": .string("shirt")]),
+				.dictionary(["title": .string("Product 3"), "available": .bool(true), "type": .string("shoes")]),
+				.dictionary(["title": .string("Product 4"), "type": .string("shirt")])
+			]),
+			"strings": .array([.string("x"), .string("y"), .string("cat")])
+		]
+
+		// Test selecting by truthy property
+		let lexer1 = Lexer(templateString: "{{ products | where: \"available\" | map: \"title\" | join: \", \" }}")
+		let tokens1 = lexer1.tokenize()
+		let parser1 = Parser(tokens: tokens1, context: Context(dictionary: values))
+		let res1 = try parser1.parse()
+		XCTAssertEqual(res1, ["Product 1, Product 3"])
+
+		// Test selecting by property value
+		let lexer2 = Lexer(templateString: "{{ products | where: \"type\", \"shoes\" | map: \"title\" | join: \", \" }}")
+		let tokens2 = lexer2.tokenize()
+		let parser2 = Parser(tokens: tokens2, context: Context(dictionary: values))
+		let res2 = try parser2.parse()
+		XCTAssertEqual(res2, ["Product 1, Product 3"])
+
+		// Test selecting strings from array
+		let lexer3 = Lexer(templateString: "{{ strings | where: \"cat\" | join: \", \" }}")
+		let tokens3 = lexer3.tokenize()
+		let parser3 = Parser(tokens: tokens3, context: Context(dictionary: values))
+		let res3 = try parser3.parse()
+		XCTAssertEqual(res3, ["cat"])
 	}
 }
