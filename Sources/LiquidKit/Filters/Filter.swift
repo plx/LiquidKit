@@ -25,14 +25,59 @@ open class Filter: @unchecked Sendable
 	}
 }
 
-extension Filter
+extension [String:Filter]
 {
-	static let builtInFilters: [Filter] = [
-		abs, append, atLeast, atMost, capitalize, ceil, concat, compact, date, `default`, dividedBy, downcase, escape,
-		escapeOnce, first, floor, join, last, leftStrip, map, minus, modulo, newlineToBr, plus, prepend, remove,
-		removeFirst, replace, replaceFirst, reverse, round, rightStrip, size, slice, sort, sortNatural, split, strip,
-		stripHTML, stripNewlines, times, truncate, truncateWords, uniq, upcase, urlDecode, urlEncode
-	]
+  static let builtInFilters: Self = Self(
+    uniqueKeysWithValues: [
+      Filter.abs,
+      Filter.append,
+      Filter.atLeast,
+      Filter.atMost,
+      Filter.capitalize,
+      Filter.ceil,
+      Filter.concat,
+      Filter.compact,
+      Filter.date,
+      Filter.`default`,
+      Filter.dividedBy,
+      Filter.downcase,
+      Filter.escape,
+      Filter.escapeOnce,
+      Filter.first,
+      Filter.floor,
+      Filter.join,
+      Filter.last,
+      Filter.leftStrip,
+      Filter.map,
+      Filter.minus,
+      Filter.modulo,
+      Filter.newlineToBr,
+      Filter.plus,
+      Filter.prepend,
+      Filter.remove,
+      Filter.removeFirst,
+      Filter.replace,
+      Filter.replaceFirst,
+      Filter.reverse,
+      Filter.round,
+      Filter.rightStrip,
+      Filter.size,
+      Filter.slice,
+      Filter.sort,
+      Filter.sortNatural,
+      Filter.split,
+      Filter.strip,
+      Filter.stripHTML,
+      Filter.stripNewlines,
+      Filter.times,
+      Filter.truncate,
+      Filter.truncateWords,
+      Filter.uniq,
+      Filter.upcase,
+      Filter.urlDecode,
+      Filter.urlEncode
+    ].lazy.map { ($0.identifier, $0) }
+  )
 }
 
 public extension Filter

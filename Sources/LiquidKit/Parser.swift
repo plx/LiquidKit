@@ -13,7 +13,7 @@ open class Parser
 {
 	private var tokens: [Token]
 	private let context: Context
-	private var filters: [Filter] = []
+  private var filters: [String:Filter] = .builtInFilters
   private var operators: [String: any Operator] = [String: any Operator].builtInOperators
 	private var tags: [String: [Tag.Type]] = [:]
 	private var parseErrors: [Error] = []
@@ -30,7 +30,6 @@ open class Parser
 
 	open func registerFilters()
 	{
-		Filter.builtInFilters.forEach(register)
 	}
 
 	open func registerTags()
@@ -50,7 +49,7 @@ open class Parser
 
 	public func register(filter: Filter)
 	{
-		filters.append(filter)
+    filters[filter.identifier] = filter
 	}
 
 	public func register(operator: any Operator) {
@@ -202,7 +201,7 @@ open class Parser
 				filterParameters = String(lastComponent).smartSplit(separator: ",").map({ context.parseString(String($0)) ?? .nil })
 			}
 
-			guard let filter = filters.first(where: { $0.identifier == filterIdentifier }) else
+			guard let filter = filters[filterIdentifier] else
 			{
 				print("[LiquidKit] Error: Unknown filter name: \(filterIdentifier). Stopping filter processing.")
 				return filteredValue
