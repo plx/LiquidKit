@@ -1,5 +1,56 @@
 import Foundation
 
+/// Implements the `slice` filter, which extracts a substring or subarray from the input.
+///
+/// The `slice` filter returns a single character or a substring starting from a specified index.
+/// It accepts one or two parameters: the starting index (which can be negative to count from
+/// the end), and optionally the length of the substring to extract. When only one parameter
+/// is provided, it returns a single character at that index. With two parameters, it returns
+/// a substring of the specified length starting from the given index.
+///
+/// The filter handles both positive and negative indices. Positive indices count from the
+/// beginning (0-based), while negative indices count from the end (-1 is the last character).
+/// If the starting index is out of bounds or the length is zero or negative, an empty string
+/// is returned.
+///
+/// ## Examples
+///
+/// Extract a single character:
+/// ```liquid
+/// {{ "Liquid" | slice: 0 }}    // Output: "L"
+/// {{ "Liquid" | slice: 2 }}    // Output: "q"
+/// {{ "Liquid" | slice: -1 }}   // Output: "d"
+/// {{ "Liquid" | slice: -2 }}   // Output: "i"
+/// ```
+///
+/// Extract a substring:
+/// ```liquid
+/// {{ "Liquid" | slice: 2, 3 }}  // Output: "qui"
+/// {{ "Liquid" | slice: 0, 3 }}  // Output: "Liq"
+/// {{ "Liquid" | slice: -3, 2 }} // Output: "ui"
+/// {{ "Liquid" | slice: -2, 99 }} // Output: "id" (length capped at string end)
+/// ```
+///
+/// Edge cases:
+/// ```liquid
+/// {{ "hello" | slice: 99 }}     // Output: "" (index out of bounds)
+/// {{ "hello" | slice: 1, 0 }}   // Output: "" (zero length)
+/// {{ "hello" | slice: -2, -1 }} // Output: "" (negative length)
+/// {{ 123 | slice: 1 }}          // Output: "" (non-string input)
+/// ```
+///
+/// - Important: This filter only works with string inputs. Non-string values are converted
+///   to strings before processing, which may produce unexpected results. Array slicing is
+///   not currently supported in this implementation.
+///
+/// - Warning: The filter expects integer parameters. Passing non-integer values for the
+///   index or length parameters will cause the filter to fail or produce invalid results
+///   according to the Liquid specification.
+///
+/// - SeeAlso: ``JoinFilter``, ``FirstFilter``, ``LastFilter``
+/// - SeeAlso: [Shopify Liquid slice](https://shopify.github.io/liquid/filters/slice/)
+/// - SeeAlso: [LiquidJS slice](https://liquidjs.com/filters/slice.html)
+/// - SeeAlso: [Python Liquid slice](https://liquid.readthedocs.io/en/latest/filter_reference/#slice)
 @usableFromInline
 package struct SliceFilter: Filter {
   @usableFromInline

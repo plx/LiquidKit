@@ -1,5 +1,79 @@
 import Foundation
 
+/// Implements the `find` filter, which searches for the first item in a collection matching specified criteria.
+/// 
+/// The `find` filter is a powerful search utility that works with arrays, strings, and objects. When used
+/// with arrays of objects, it can search for items where a specific property matches a given value or is
+/// truthy. When used with arrays of strings, it performs substring matching. The filter supports both
+/// simple property existence checks and explicit value comparisons.
+/// 
+/// The filter accepts one or two parameters: the first parameter specifies the property name (for objects)
+/// or substring (for strings) to search for, and the optional second parameter specifies the exact value
+/// to match against. When only one parameter is provided, the filter returns the first item where the
+/// specified property is truthy (for objects) or contains the substring (for strings).
+/// 
+/// ## Examples
+/// 
+/// Finding objects by property value:
+/// ```liquid
+/// {% assign products = '[{"name": "Shirt", "price": 20}, {"name": "Pants", "price": 30}]' | parse_json %}
+/// {{ products | find: "name", "Pants" | json }}
+/// // Output: {"name": "Pants", "price": 30}
+/// ```
+/// 
+/// Finding objects by truthy property:
+/// ```liquid
+/// {% assign users = '[{"name": "Alice", "admin": true}, {"name": "Bob"}]' | parse_json %}
+/// {{ users | find: "admin" | json }}
+/// // Output: {"name": "Alice", "admin": true}
+/// ```
+/// 
+/// String substring matching:
+/// ```liquid
+/// {% assign words = "apple,banana,cherry" | split: "," %}
+/// {{ words | find: "an" }}
+/// // Output: "banana"
+/// 
+/// {{ "Hello World" | find: "Wor" }}
+/// // Output: "Hello World"
+/// ```
+/// 
+/// With single values (treated as single-element arrays):
+/// ```liquid
+/// {{ "zoo" | find: "z" }}
+/// // Output: "zoo"
+/// 
+/// {{ 42 | find: "4" }}
+/// // Output: ""  // Numbers don't support substring matching
+/// ```
+/// 
+/// Edge cases:
+/// ```liquid
+/// {{ nil | find: "test" }}
+/// // Output: ""
+/// 
+/// {% assign empty = "" | split: "," %}
+/// {{ empty | find: "test" }}
+/// // Output: ""
+/// ```
+/// 
+/// - Important: When searching arrays of objects, the filter only examines direct properties, not nested ones.\
+///   Dot notation for nested property access is not supported.
+/// 
+/// - Important: For string arrays, the filter performs substring matching, not exact matching. Use the second\
+///   parameter for exact value matching when needed.
+/// 
+/// - Important: Non-array inputs (except nil) are treated as single-element arrays, allowing the filter to work\
+///   with individual strings or objects.
+/// 
+/// - Warning: The current implementation has some limitations with non-dictionary arrays when using two parameters.\
+///   String matching behavior may not align with the reference implementation in all cases.
+/// 
+/// - SeeAlso: ``FindIndexFilter``
+/// - SeeAlso: ``WhereFilter``
+/// - SeeAlso: ``SelectFilter``
+/// - SeeAlso: [LiquidJS documentation](https://liquidjs.com/filters/find.html)
+/// - SeeAlso: [Python Liquid documentation](https://liquid.readthedocs.io/en/latest/filter_reference/#find)
 @usableFromInline
 package struct FindFilter: Filter {
     @usableFromInline

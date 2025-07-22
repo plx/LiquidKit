@@ -1,5 +1,52 @@
 import Foundation
 
+/// Implements the `base64_url_safe_decode` filter, which decodes a URL-safe Base64 encoded string.
+/// 
+/// The `base64_url_safe_decode` filter decodes strings that have been encoded using URL-safe
+/// Base64 encoding. URL-safe Base64 replaces the characters `+` and `/` with `-` and `_`
+/// respectively, and typically omits padding characters (`=`). This filter handles the
+/// conversion from URL-safe format to standard Base64 before decoding.
+/// 
+/// The filter only accepts string inputs. It automatically handles the conversion of URL-safe
+/// characters back to standard Base64 characters and adds any necessary padding before
+/// decoding. If the input cannot be decoded as valid Base64 or the decoded data is not
+/// valid UTF-8 text, the filter returns `nil`.
+/// 
+/// ## Examples
+/// 
+/// Basic URL-safe Base64 decoding:
+/// ```liquid
+/// {{ "XyMvLg==" | base64_url_safe_decode }}
+/// <!-- Output: _#/. -->
+/// 
+/// {{ "SGVsbG8sIFdvcmxkIQ" | base64_url_safe_decode }}
+/// <!-- Output: Hello, World! -->
+/// ```
+/// 
+/// Decoding with URL-safe characters:
+/// ```liquid
+/// {{ "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXogQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVogMTIzNDU2Nzg5MCAhQCMkJV4mKigpLT1fKy8_Ljo7W117fVx8" | base64_url_safe_decode }}
+/// <!-- Output: abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 !@#$%^&*()-=_+/?.:;[]{}\\| -->
+/// ```
+/// 
+/// Non-string inputs and undefined values:
+/// ```liquid
+/// {{ 5 | base64_url_safe_decode }}
+/// <!-- Error: invalid (non-string input) -->
+/// 
+/// {{ undefined_variable | base64_url_safe_decode }}
+/// <!-- Output: (empty string) -->
+/// ```
+/// 
+/// - Important: This filter automatically handles padding restoration. You don't need to \
+///   add padding characters to the input string.
+/// 
+/// - Warning: Non-string inputs will cause an error in strict Liquid implementations. \
+///   Invalid Base64 data or non-UTF8 decoded content will return `nil`.
+/// 
+/// - SeeAlso: ``Base64UrlSafeEncodeFilter``, ``Base64DecodeFilter``
+/// - SeeAlso: [LiquidJS base64_url_safe_decode](https://liquidjs.com/filters/base64_url_safe_decode.html)
+/// - SeeAlso: [Python Liquid base64_url_safe_decode](https://liquid.readthedocs.io/en/latest/filter_reference/#base64_url_safe_decode)
 @usableFromInline
 package struct Base64UrlSafeDecodeFilter: Filter {
     @usableFromInline

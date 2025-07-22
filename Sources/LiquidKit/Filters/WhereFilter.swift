@@ -1,5 +1,80 @@
 import Foundation
 
+/// Implements the `where` filter, which selects elements from an array based on property values.
+/// 
+/// The where filter is a powerful array filtering tool that selects elements based on
+/// property matching. It can filter by the presence of a truthy property value (one
+/// parameter) or by exact property-value matching (two parameters). This filter is
+/// particularly useful when working with arrays of objects, such as products, posts,
+/// or any structured data where you need to select items based on their attributes.
+/// 
+/// The filter supports two modes of operation: truthy filtering (selects items where
+/// the specified property has a truthy value) and equality filtering (selects items
+/// where the property equals a specific value). For arrays of simple values (not objects),
+/// the filter can select values that match the provided parameter. Non-array inputs are
+/// treated as single-element arrays for consistent behavior.
+/// 
+/// ## Examples
+/// 
+/// Filtering by truthy property:
+/// ```liquid
+/// {% assign products = site.products | where: "available" %}
+/// <!-- Selects all products where available is true or any truthy value -->
+/// 
+/// {{ products | where: "featured" | map: "title" | join: ", " }}
+/// → "Product 1, Product 3"
+/// ```
+/// 
+/// Filtering by property value:
+/// ```liquid
+/// {{ products | where: "type", "shoes" | map: "title" | join: ", " }}
+/// → "Product 1, Product 3"
+/// 
+/// {{ posts | where: "author", "Jane" | size }}
+/// → 5
+/// ```
+/// 
+/// Filtering simple arrays:
+/// ```liquid
+/// {% assign colors = "red,blue,green,blue" | split: "," %}
+/// {{ colors | where: "blue" | join: ", " }}
+/// → "blue, blue"
+/// ```
+/// 
+/// Chaining with other filters:
+/// ```liquid
+/// {{ products | where: "available" | where: "type", "shoes" | first | map: "title" }}
+/// → "Product 1"
+/// ```
+/// 
+/// Edge cases:
+/// ```liquid
+/// {{ empty_array | where: "property" }}
+/// → []
+/// 
+/// {{ nil | where: "property" }}
+/// → []
+/// ```
+/// 
+/// - Important: When using single-parameter mode, the filter selects items where the\
+///   property value is truthy (not nil, false, or empty string). This includes true,\
+///   numbers, non-empty strings, arrays, and dictionaries.
+/// 
+/// - Important: Objects without the specified property are excluded from the result.\
+///   The filter does not throw an error for missing properties.
+/// 
+/// - Important: For non-dictionary array elements, the filter compares the element\
+///   directly with the first parameter rather than looking for a property.
+/// 
+/// - Warning: The current implementation has TODO comments indicating potential\
+///   improvements needed for nil handling and range expansion.
+/// 
+/// - SeeAlso: ``MapFilter`` for extracting property values from filtered results
+/// - SeeAlso: ``SelectFilter`` for more complex filtering logic
+/// - SeeAlso: ``FindFilter`` for getting the first matching element
+/// - SeeAlso: [LiquidJS where](https://liquidjs.com/filters/where.html)
+/// - SeeAlso: [Python Liquid where](https://liquid.readthedocs.io/en/latest/filter_reference/#where)
+/// - SeeAlso: [Shopify Liquid where](https://shopify.github.io/liquid/filters/where/)
 @usableFromInline
 package struct WhereFilter: Filter {
     @usableFromInline
