@@ -28,7 +28,9 @@ extension [String: any Operator] {
         GreaterThanOrEqualOperator(),
         LessThanOperator(),
         LessThanOrEqualOperator(),
-        ContainsOperator()
+        ContainsOperator(),
+        AndOperator(),
+        OrOperator()
       ] as [any Operator]).lazy.map { op in
         (op.identifier, op)
       })
