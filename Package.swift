@@ -21,6 +21,10 @@ let package = Package(
     .package(
       url: "https://github.com/Kitura/swift-html-entities.git",
       from: "4.0.1"
+    ),
+    .package(
+      url: "https://github.com/swiftlang/swift-docc-plugin",
+      from: "1.4.3"
     )
   ],
   targets: [

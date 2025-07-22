@@ -100,6 +100,12 @@ swift build
 # Run tests
 swift test
 
+# Build documentation
+swift package generate-documentation --product LiquidKit
+
+# Preview documentation in browser
+swift package --disable-sandbox preview-documentation --product LiquidKit
+
 # Use in Xcode
 open Package.swift
 ```

@@ -35,7 +35,7 @@ public enum Token {
       case .string(let string):
         string
       case .array(let array):
-        array.compactMap({ $0.stringValue }).joined()
+        array.lazy.map({ $0.stringValue }).joined()
       case .range(let range):
         "\(range.lowerBound)..\(range.upperBound)"
       default:
