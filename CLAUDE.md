@@ -114,22 +114,25 @@ open Package.swift
 
 ```
 LiquidKit/
-├── Package.swift              # SPM manifest
+├── Package.swift                     # SPM manifest
 ├── Sources/
 │   └── LiquidKit/
-│       ├── Lexer.swift       # Template tokenization
-│       ├── Parser.swift      # Token parsing and compilation  
-│       ├── Filters/          # Filter system (47 individual filter implementations)
-│       │   ├── Filter.swift  # Filter protocol definition
+│       ├── Lexer.swift               # Template tokenization
+│       ├── Parser.swift              # Token parsing and compilation
+|       ├── Filter.swift              # Filter protocol definition  
+|       ├── Filter+Conveniences.swift # Filter protocol helper methods
+│       ├── Filters/                  # Filter system (47 individual filter implementations)
+│       │   ├── 
 │       │   ├── AbsFilter.swift
 │       │   ├── AppendFilter.swift
 │       │   └── ... (44 more filter implementations)
-│       ├── Tag.swift         # All tag implementations
-│       ├── Token.swift       # Value type system
-│       ├── Context.swift     # Variable storage and scope
-│       ├── Operator.swift    # Comparison and logical operators
-│       ├── Error.swift       # Error types
-│       └── Extensions/       # String and Double extensions
+│       ├── Tag.swift                   # All tag implementations
+│       ├── Token.swift                 # Value type system
+│       ├── Context.swift               # Variable storage and scope
+│       ├── Operator.swift              # Comparison and logical operators
+│       ├── Operator+Conveniences.swift # Operator protocol helper methods
+│       ├── Error.swift                 # Error types
+│       └── Extensions/                 # String and Double extensions
 ├── Tests/
 │   └── LiquidKitTests/      # Comprehensive test suite
 │       ├── Resources/        # Test resources

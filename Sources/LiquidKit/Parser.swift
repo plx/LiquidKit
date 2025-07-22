@@ -164,13 +164,13 @@ open class Parser
 
 		if splitStatement.count == 1
 		{
-			return compileOperators(for: statement, context: context)
+			return try compileOperators(for: statement, context: context)
 		}
 
 		guard let firstStatement = splitStatement.first else {
 			return .nil
 		}
-		var filteredValue = compileOperators(for: String(firstStatement), context: context)
+		var filteredValue = try compileOperators(for: String(firstStatement), context: context)
 
 		for filterString in splitStatement[1...]
 		{
@@ -254,7 +254,7 @@ open class Parser
 		return nil
 	}
 
-	internal func compileOperators(for statement: String, context inputContext: Context? = nil) -> Token.Value
+	internal func compileOperators(for statement: String, context inputContext: Context? = nil) throws -> Token.Value
 	{
 		if statement.count == 0
 		{
@@ -328,7 +328,7 @@ open class Parser
 
 			if let lastValue = lastParsedValue
 			{
-				let currentValue = operatorInstance.apply(firstValue, secondValue)
+				let currentValue = try operatorInstance.apply(firstValue, secondValue)
 				switch node
 				{
 				case "and":
@@ -344,7 +344,7 @@ open class Parser
 			}
 			else
 			{
-				lastParsedValue = operatorInstance.apply(firstValue, secondValue)
+				lastParsedValue = try operatorInstance.apply(firstValue, secondValue)
 			}
 		}
 

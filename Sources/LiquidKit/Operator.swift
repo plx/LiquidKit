@@ -4,7 +4,7 @@ public protocol Operator: Sendable {
   
   static var operatorIdentifier: String { get }
   var identifier: String { get }
-  func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value
+  func apply(_ lhs: Token.Value, _ rhs: Token.Value) throws -> Token.Value
   
 }
 
