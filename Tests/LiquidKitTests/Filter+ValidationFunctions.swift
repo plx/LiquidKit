@@ -3,6 +3,15 @@ import Testing
 
 // MARK: Result Validation
 
+/// Validates that a filter evaluates to an expected result with TokenValueConvertible types.
+/// - Parameters:
+///   - value: The input value to filter, accepting any `TokenValueConvertible` type.
+///   - parameters: Optional parameters for the filter operation.
+///   - filter: The filter to test.
+///   - expected: The expected result value, accepting any `TokenValueConvertible` type.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+/// - Throws: Test failures or filter evaluation errors.
 func validateEvaluation(
   of value: some TokenValueConvertible,
   with parameters: [Token.Value] = [],
@@ -21,6 +30,15 @@ func validateEvaluation(
   )
 }
 
+/// Validates that a filter evaluates to an expected Token.Value result.
+/// - Parameters:
+///   - value: The input value to filter, accepting any `TokenValueConvertible` type.
+///   - parameters: Optional parameters for the filter operation.
+///   - filter: The filter to test.
+///   - expected: The expected result as a `Token.Value`.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+/// - Throws: Test failures or filter evaluation errors.
 func validateEvaluation(
   of value: some TokenValueConvertible,
   with parameters: [Token.Value] = [],
@@ -39,6 +57,15 @@ func validateEvaluation(
   )
 }
 
+/// Validates that a filter evaluates to an expected result with Token.Value types.
+/// - Parameters:
+///   - value: The input value to filter as a `Token.Value`.
+///   - parameters: Optional parameters for the filter operation.
+///   - filter: The filter to test.
+///   - expected: The expected result as a `Token.Value`.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+/// - Throws: Test failures or filter evaluation errors.
 func validateEvaluation(
   of value: Token.Value,
   with parameters: [Token.Value] = [],
@@ -68,6 +95,16 @@ func validateEvaluation(
 
 // MARK: - Error Validation
 
+/// Validates that a filter evaluation throws a specific error type.
+/// - Parameters:
+///   - value: The input value to filter, accepting any `TokenValueConvertible` type.
+///   - parameters: Optional parameters for the filter operation.
+///   - filter: The filter to test.
+///   - errorType: The expected error type that should be thrown.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+///   - additionalVerification: Optional closure to perform additional error verification.
+/// - Throws: Test failures if the wrong error type is thrown or no error occurs.
 func validateEvaluation<ErrorType>(
   of value: some TokenValueConvertible,
   with parameters: [Token.Value] = [],
@@ -88,6 +125,16 @@ func validateEvaluation<ErrorType>(
   )
 }
 
+/// Validates that a filter evaluation throws a specific error type with Token.Value input.
+/// - Parameters:
+///   - value: The input value to filter as a `Token.Value`.
+///   - parameters: Optional parameters for the filter operation.
+///   - filter: The filter to test.
+///   - errorType: The expected error type that should be thrown.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+///   - additionalVerification: Optional closure to perform additional error verification.
+/// - Throws: Test failures if the wrong error type is thrown or no error occurs.
 func validateEvaluation<ErrorType>(
   of value: Token.Value,
   with parameters: [Token.Value] = [],

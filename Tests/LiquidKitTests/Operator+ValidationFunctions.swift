@@ -3,6 +3,14 @@ import Testing
 
 // MARK: Result Validation
 
+/// Validates that an operator application yields an expected result with TokenValueConvertible types.
+/// - Parameters:
+///   - operator: The operator to test.
+///   - operands: A tuple of left and right operands, accepting any `TokenValueConvertible` types.
+///   - expected: The expected result value, accepting any `TokenValueConvertible` type.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+/// - Throws: Test failures or operator application errors.
 func validateApplication(
   of operator: some Operator,
   to operands: (some TokenValueConvertible, some TokenValueConvertible),
@@ -19,6 +27,14 @@ func validateApplication(
   )
 }
 
+/// Validates that an operator application yields an expected Token.Value result.
+/// - Parameters:
+///   - operator: The operator to test.
+///   - operands: A tuple of left and right operands, accepting any `TokenValueConvertible` types.
+///   - expected: The expected result as a `Token.Value`.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+/// - Throws: Test failures or operator application errors.
 func validateApplication(
   of operator: some Operator,
   to operands: (some TokenValueConvertible, some TokenValueConvertible),
@@ -44,6 +60,14 @@ func validateApplication(
   )
 }
 
+/// Validates that an operator application yields an expected result with Token.Value operands.
+/// - Parameters:
+///   - operator: The operator to test.
+///   - operands: A tuple of left and right operands as `Token.Value` types.
+///   - expected: The expected result as a `Token.Value`.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+/// - Throws: Test failures or operator application errors.
 func validateApplication(
   of operator: some Operator,
   to operands: (Token.Value, Token.Value),
@@ -71,6 +95,15 @@ func validateApplication(
 
 // MARK: - Error Validation
 
+/// Validates that an operator application throws a specific error type.
+/// - Parameters:
+///   - operator: The operator to test.
+///   - operands: A tuple of left and right operands, accepting any `TokenValueConvertible` types.
+///   - errorType: The expected error type that should be thrown.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+///   - additionalVerification: Optional closure to perform additional error verification.
+/// - Throws: Test failures if the wrong error type is thrown or no error occurs.
 func validateApplication<ErrorType>(
   of operator: some Operator,
   to operands: (some TokenValueConvertible, some TokenValueConvertible),
@@ -103,6 +136,15 @@ func validateApplication<ErrorType>(
   }
 }
 
+/// Validates that an operator application throws a specific error type with Token.Value operands.
+/// - Parameters:
+///   - operator: The operator to test.
+///   - operands: A tuple of left and right operands as `Token.Value` types.
+///   - errorType: The expected error type that should be thrown.
+///   - explanation: Optional explanation to include in failure messages.
+///   - sourceLocation: The source location for test failure reporting.
+///   - additionalVerification: Optional closure to perform additional error verification.
+/// - Throws: Test failures if the wrong error type is thrown or no error occurs.
 func validateApplication<ErrorType>(
   of operator: some Operator,
   to operands: (Token.Value, Token.Value),
