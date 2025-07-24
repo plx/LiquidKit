@@ -2,15 +2,12 @@ import Foundation
 
 /// Implements the `upcase` filter, which converts a string to uppercase.
 /// 
-/// The upcase filter transforms all alphabetic characters in a string to their uppercase
-/// equivalents. This is one of the most basic text transformation filters, commonly used
-/// for formatting headers, emphasis, or standardizing text display. The filter uses the
-/// locale-aware uppercasing provided by Swift's String implementation, which correctly
-/// handles international characters and special casing rules.
-/// 
-/// Non-string inputs are returned unchanged, making the filter safe to use in filter
-/// chains where the value type might be uncertain. This behavior allows for graceful
-/// handling of mixed-type data without causing template errors.
+/// The `upcase` filter is used to transform text to all uppercase letters. This is commonly used for
+/// formatting headers, creating emphasis, or standardizing text display. When applied to non-string values,
+/// the filter first converts them to their string representation before applying the uppercase transformation,
+/// matching the behavior of liquidjs and python-liquid. The filter uses the locale-aware uppercasing
+/// provided by Swift's String implementation, which correctly handles international characters and special
+/// casing rules.
 /// 
 /// ## Examples
 /// 
@@ -38,21 +35,33 @@ import Foundation
 /// → "ÜBER GRÖSSE"
 /// ```
 /// 
-/// Non-string values pass through:
+/// With non-string values:
 /// ```liquid
-/// {{ 123 | upcase }}
-/// → 123
+/// {{ 5 | upcase }}
+/// → "5"
 /// 
 /// {{ true | upcase }}
-/// → true
+/// → "TRUE"
+/// 
+/// {{ false | upcase }}
+/// → "FALSE"
 /// ```
 /// 
-/// - Important: The filter preserves non-alphabetic characters such as numbers,\
-///   punctuation, and whitespace exactly as they appear in the input.
+/// With undefined or nil values:
+/// ```liquid
+/// {{ undefined_variable | upcase }}
+/// → ""
 /// 
-/// - Important: For non-string inputs, the filter returns the value unchanged rather\
-///   than converting it to a string first. Use the `string` filter before `upcase`\
-///   if you need to uppercase the string representation of non-string values.
+/// {{ nil | upcase }}
+/// → ""
+/// ```
+/// 
+/// - Important: This filter converts non-string inputs to their string representation before applying the\
+///   uppercase transformation. Boolean values are converted to "TRUE" or "FALSE", numeric values to their\
+///   string representation, and nil values to an empty string.
+/// 
+/// - Warning: The `upcase` filter does not accept any parameters. Passing parameters will result in an error\
+///   in strict Liquid implementations.
 /// 
 /// - SeeAlso: ``DowncaseFilter`` for converting to lowercase
 /// - SeeAlso: ``CapitalizeFilter`` for capitalizing only the first letter
@@ -69,10 +78,31 @@ package struct UpcaseFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
-            return token
+        // Convert the input token to a string representation
+        let inputString: String
+        
+        // Special handling for boolean values to match liquidjs/python-liquid behavior
+        switch token {
+        case .bool(let value):
+            // Boolean values should be converted to "true" or "false" strings
+            // When uppercased, these become "TRUE" or "FALSE"
+            inputString = value ? "true" : "false"
+        case .nil:
+            // nil values should convert to empty string, not return .nil
+            // This matches the behavior of python-liquid where nil/None becomes ""
+            inputString = ""
+        default:
+            // For all other types (string, integer, decimal, array, range, dictionary),
+            // use the standard stringValue property which handles conversion appropriately
+            // - Strings return themselves
+            // - Integers/decimals convert to their string representation
+            // - Arrays concatenate their elements' string values
+            // - Ranges return format like "1..5"
+            // - Dictionaries return empty string
+            inputString = token.stringValue
         }
         
-        return .string(string.uppercased())
+        // Apply uppercase transformation to the string representation
+        return .string(inputString.uppercased())
     }
 }

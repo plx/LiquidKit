@@ -8,30 +8,29 @@ import Foundation
 /// should be preserved in the rendered HTML. The filter handles all common newline
 /// formats: Unix (`\n`), Windows (`\r\n`), and classic Mac (`\r`).
 /// 
-/// Unlike some other implementations, this filter preserves the original newline
-/// characters after inserting the `<br />` tags. This approach maintains the source
-/// formatting, which can be beneficial for viewing HTML source or when the output might
-/// be processed further. The filter only operates on string values; non-string inputs
-/// are returned unchanged.
+/// This implementation matches the behavior of liquidjs, python-liquid, and Shopify Liquid
+/// by completely replacing newline characters with `<br />` tags. The original newline
+/// characters are not preserved in the output. The filter only operates on string values;
+/// non-string inputs are returned unchanged.
 /// 
 /// ## Examples
 /// 
 /// Basic newline conversion:
 /// ```liquid
 /// {{ "First line\nSecond line" | newline_to_br }}
-/// // Output: "First line<br />\nSecond line"
+/// // Output: "First line<br />Second line"
 /// ```
 /// 
 /// Multi-line text formatting:
 /// ```liquid
 /// {{ "- apples\n- oranges\n" | newline_to_br }}
-/// // Output: "- apples<br />\n- oranges<br />\n"
+/// // Output: "- apples<br />- oranges<br />"
 /// ```
 /// 
 /// Windows-style line endings:
 /// ```liquid
 /// {{ "Line 1\r\nLine 2" | newline_to_br }}
-/// // Output: "Line 1<br />\nLine 2"
+/// // Output: "Line 1<br />Line 2"
 /// ```
 /// 
 /// Non-string input:
@@ -46,11 +45,12 @@ import Foundation
 /// // Output: "" (empty string)
 /// ```
 /// 
-/// - Important: The filter preserves the original newline characters after inserting
-///   `<br />` tags. This differs from some implementations that replace newlines entirely.
+/// - Important: The filter completely replaces newline characters with `<br />` tags.
+///   The original newline characters are not preserved in the output.
 /// 
 /// - Important: The filter processes line endings in order: `\r\n` first, then `\n`,
-///   then `\r`. This ensures Windows-style line endings are handled as single breaks.
+///   then `\r`. This ensures Windows-style line endings are handled as single breaks
+///   rather than being converted to two separate `<br />` tags.
 /// 
 /// - SeeAlso: ``StripNewlinesFilter``, ``StripFilter``, ``EscapeFilter``
 /// - SeeAlso: [LiquidJS Documentation](https://liquidjs.com/filters/newline_to_br.html)
@@ -66,15 +66,18 @@ package struct NewlineToBrFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Only operate on string values; pass through all other types unchanged
         guard case .string(let string) = token else {
             return token
         }
         
-        // Replace all newline characters with <br />
+        // Replace all newline characters with HTML line breaks
+        // Process in order: Windows (\r\n) first to avoid double-conversion,
+        // then Unix (\n), then classic Mac (\r)
         let result = string
-            .replacingOccurrences(of: "\r\n", with: "<br />")
-            .replacingOccurrences(of: "\n", with: "<br />")
-            .replacingOccurrences(of: "\r", with: "<br />")
+            .replacingOccurrences(of: "\r\n", with: "<br />")  // Windows: CRLF -> <br />
+            .replacingOccurrences(of: "\n", with: "<br />")    // Unix: LF -> <br />
+            .replacingOccurrences(of: "\r", with: "<br />")    // Classic Mac: CR -> <br />
         
         return .string(result)
     }

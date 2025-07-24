@@ -7,9 +7,10 @@ import Foundation
 /// using the `replace` filter with an empty replacement string. The filter is
 /// case-sensitive and removes all matches, not just the first one.
 /// 
-/// The filter only operates on string inputs. Non-string values are returned unchanged,
-/// and if the substring parameter is missing or not a string, the original input is
-/// returned without modification.
+/// Following the behavior of python-liquid and liquidjs, this filter coerces both the input
+/// and parameter values to strings before performing the removal operation. This means
+/// integers, decimals, booleans, and other types are converted to their string representations
+/// before processing.
 /// 
 /// - Example: Basic removal
 /// ```liquid
@@ -35,12 +36,27 @@ import Foundation
 /// <!-- Output: Hello HELLO  -->
 /// ```
 /// 
+/// - Example: Type coercion
+/// ```liquid
+/// {{ 12345 | remove: "3" }}
+/// <!-- Output: 1245 -->
+/// 
+/// {{ true | remove: "r" }}
+/// <!-- Output: tue -->
+/// 
+/// {{ "test123test" | remove: 123 }}
+/// <!-- Output: testtest -->
+/// ```
+/// 
 /// - Important: The filter removes ALL occurrences of the substring, not just the first one.
 ///   Use `remove_first` if you only want to remove the first occurrence.
 /// 
 /// - Important: The removal is performed as a simple string replacement. It does not support
 ///   regular expressions or pattern matching. For more complex removals, consider using
 ///   multiple filters in combination.
+/// 
+/// - Note: `nil` values are returned as `nil` (which renders as empty string), and arrays are
+///   converted to strings by joining their elements.
 /// 
 /// - SeeAlso: ``RemoveFirstFilter`` - Removes only the first occurrence
 /// - SeeAlso: ``ReplaceFilter`` - Replaces substrings with a different string
@@ -57,15 +73,72 @@ package struct RemoveFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
+        // Convert input to string - matching python-liquid behavior
+        // For nil, return nil (which renders as empty string)
+        if case .nil = token {
             return token
         }
         
-        guard parameters.count >= 1,
-              case .string(let substring) = parameters[0] else {
+        // Get string representation of the input value
+        let inputString: String
+        switch token {
+        case .string(let str):
+            // String values use their value directly
+            inputString = str
+        case .bool(let value):
+            // Booleans convert to "true" or "false"
+            inputString = value ? "true" : "false"
+        case .integer(let value):
+            // Integers convert to their string representation
+            inputString = "\(value)"
+        case .decimal(let value):
+            // Decimals convert to their string representation
+            inputString = "\(value)"
+        case .array(let array):
+            // Arrays join their elements' string values
+            inputString = array.map { $0.stringValue }.joined()
+        case .dictionary:
+            // Dictionaries convert to their debug representation
+            // This matches the behavior of other Liquid implementations
+            inputString = token.stringValue
+        case .range(let range):
+            // Ranges convert to "lower..upper" format
+            inputString = "\(range.lowerBound)..\(range.upperBound)"
+        case .nil:
+            // Already handled above, but needed for exhaustive switch
             return token
         }
         
-        return .string(string.replacingOccurrences(of: substring, with: ""))
+        // Check if we have a parameter to remove
+        guard parameters.count >= 1 else {
+            // No parameter means return the string unchanged
+            return .string(inputString)
+        }
+        
+        // Convert parameter to string - matching python-liquid behavior
+        let substringToRemove: String
+        switch parameters[0] {
+        case .string(let str):
+            // String parameters use their value directly
+            substringToRemove = str
+        case .bool(let value):
+            // Boolean parameters convert to "true" or "false"
+            substringToRemove = value ? "true" : "false"
+        case .integer(let value):
+            // Integer parameters convert to their string representation
+            substringToRemove = "\(value)"
+        case .decimal(let value):
+            // Decimal parameters convert to their string representation
+            substringToRemove = "\(value)"
+        case .nil:
+            // nil parameter means return input unchanged
+            return .string(inputString)
+        default:
+            // Other types (arrays, dictionaries, ranges) use their stringValue
+            substringToRemove = parameters[0].stringValue
+        }
+        
+        // Perform the removal - all occurrences are removed
+        return .string(inputString.replacingOccurrences(of: substringToRemove, with: ""))
     }
 }

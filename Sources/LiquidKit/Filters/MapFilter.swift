@@ -10,10 +10,10 @@ import Foundation
 /// from a list of products.
 /// 
 /// For array elements that don't contain the specified property, `nil` is included in
-/// the result (which renders as empty in Liquid output). Non-dictionary elements in the
-/// array are skipped entirely, resulting in a potentially shorter output array. If the
-/// input is not an array, the filter returns the input unchanged rather than throwing
-/// an error.
+/// the result (which renders as empty in Liquid output). If the array contains any
+/// non-dictionary elements, the filter throws an error. When the input is a single
+/// dictionary (not an array), the filter extracts the specified property value directly.
+/// For other non-array inputs, the filter throws an error.
 /// 
 /// ## Examples
 /// 
@@ -31,14 +31,15 @@ import Foundation
 /// // Output: "10#20#"
 /// ```
 /// 
-/// Non-array input:
+/// Dictionary input:
 /// ```liquid
-/// {{ "hello" | map: 'title' }}
-/// // Output: "hello" (unchanged)
+/// {{ product | map: 'title' }}
+/// // Input: {"title": "Shirt", "price": 20}
+/// // Output: "Shirt"
 /// ```
 /// 
-/// - Important: Elements that are not dictionaries are completely omitted from the result,
-///   while dictionaries missing the requested property contribute `nil` (rendered as empty).
+/// - Important: Non-dictionary elements in arrays will cause an error to be thrown.
+///   This matches the behavior of liquidjs and python-liquid implementations.
 /// 
 /// - SeeAlso: ``WhereFilter``, ``SelectFilter``
 /// - SeeAlso: [LiquidJS Documentation](https://liquidjs.com/filters/map.html)
@@ -53,23 +54,86 @@ package struct MapFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .array(let array) = token else {
-            return token
-        }
-        
+        // Validate that we have at least one parameter (the property name)
         guard let firstParameter = parameters.first else {
-            return token
+            throw TemplateSyntaxError("map filter requires a property name argument")
         }
         
+        // Handle nil parameter - return empty array
+        guard firstParameter != .nil else {
+            return .array([])
+        }
+        
+        // Get the property key as a string
         let key = firstParameter.stringValue
         
-        let mappedValues = array.compactMap { item -> Token.Value? in
-            if case .dictionary(let dict) = item {
-                return dict[key] ?? .nil
+        // Handle different input types
+        switch token {
+        case .array(let array):
+            // Process array input
+            var mappedValues: [Token.Value] = []
+            
+            for item in array {
+                switch item {
+                case .dictionary(let dict):
+                    // For dictionaries, extract the property value or use nil if missing
+                    if let value = extractValue(from: dict, key: key) {
+                        mappedValues.append(value)
+                    } else {
+                        mappedValues.append(.nil)
+                    }
+                default:
+                    // Non-dictionary elements in arrays should throw an error
+                    throw TemplateSyntaxError("map filter can only be applied to arrays of objects")
+                }
             }
-            return nil
+            
+            return .array(mappedValues)
+            
+        case .dictionary(let dict):
+            // For a single dictionary input, extract the property value
+            if let value = extractValue(from: dict, key: key) {
+                return value
+            } else {
+                return .nil
+            }
+            
+        default:
+            // All other input types should throw an error
+            throw TemplateSyntaxError("map filter can only be applied to arrays or objects")
+        }
+    }
+    
+    /// Extracts a value from a dictionary, supporting dot notation for nested properties
+    /// - Parameters:
+    ///   - dict: The dictionary to extract from
+    ///   - key: The key path (may contain dots for nested access)
+    /// - Returns: The extracted value, or nil if not found
+    @inlinable
+    func extractValue(from dict: [String: Token.Value], key: String) -> Token.Value? {
+        // Split the key by dots to handle nested property access
+        let keyComponents = key.split(separator: ".").map(String.init)
+        
+        // Start with the full dictionary
+        var currentValue: Token.Value = .dictionary(dict)
+        
+        // Navigate through each component of the key path
+        for component in keyComponents {
+            switch currentValue {
+            case .dictionary(let currentDict):
+                // If we have a dictionary, try to get the value for this component
+                if let nextValue = currentDict[component] {
+                    currentValue = nextValue
+                } else {
+                    // Key not found at this level
+                    return nil
+                }
+            default:
+                // If we're not at a dictionary, we can't continue navigating
+                return nil
+            }
         }
         
-        return .array(mappedValues)
+        return currentValue
     }
 }

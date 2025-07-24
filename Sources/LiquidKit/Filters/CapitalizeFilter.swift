@@ -1,16 +1,15 @@
 import Foundation
 
-/// Implements the `capitalize` filter, which capitalizes the first word of a string.
+/// Implements the `capitalize` filter, which capitalizes the first character of a string.
 /// 
-/// The `capitalize` filter makes the first letter of the first word in a string uppercase
-/// while leaving the rest of the string unchanged. This filter uses locale-aware word
-/// boundary detection to find the first word and applies localized capitalization rules.
-/// Unlike some string manipulation functions that capitalize every word, this filter only
-/// affects the first word found in the input.
+/// The `capitalize` filter makes the first character of a string uppercase and converts
+/// the rest of the string to lowercase. This behavior matches the standard Liquid
+/// implementations in liquidjs and python-liquid. The filter operates on the entire
+/// string as a single unit, not on individual words.
 /// 
-/// The filter converts any input value to a string before processing. If the input contains
-/// no words (e.g., only punctuation or whitespace), the original string is returned unchanged.
-/// Empty strings or `nil` values return `nil`.
+/// The filter converts any input value to a string before processing. Boolean values
+/// are converted to "true" or "false" before capitalization. Empty strings and `nil` 
+/// values return an empty string.
 /// 
 /// ## Examples
 /// 
@@ -23,30 +22,35 @@ import Foundation
 /// <!-- Output: Hello world -->
 /// ```
 /// 
-/// Already capitalized strings remain unchanged:
+/// Uppercase strings are lowercased except for the first character:
 /// ```liquid
-/// {{ "Hello" | capitalize }}
+/// {{ "HELLO" | capitalize }}
 /// <!-- Output: Hello -->
 /// 
 /// {{ "HELLO WORLD" | capitalize }}
-/// <!-- Output: HELLO WORLD -->
+/// <!-- Output: Hello world -->
 /// ```
 /// 
 /// Edge cases with punctuation and special characters:
 /// ```liquid
 /// {{ "123 hello" | capitalize }}
-/// <!-- Output: 123 Hello -->
+/// <!-- Output: 123 hello -->
 /// 
 /// {{ "...hello" | capitalize }}
-/// <!-- Output: ...Hello -->
+/// <!-- Output: ...hello -->
 /// 
 /// {{ undefined_variable | capitalize }}
 /// <!-- Output: (empty string) -->
+/// 
+/// {{ true | capitalize }}
+/// <!-- Output: True -->
+/// 
+/// {{ false | capitalize }}
+/// <!-- Output: False -->
 /// ```
 /// 
-/// - Important: Only the first word is capitalized, not every word in the string. The \
-///   filter uses locale-aware word boundary detection, so behavior may vary slightly \
-///   depending on the system locale.
+/// - Important: This filter capitalizes only the first character of the entire string \
+///   and lowercases all remaining characters. It does not capitalize each word separately.
 /// 
 /// - Warning: The filter does not accept any parameters. Passing parameters will result \
 ///   in an error in strict Liquid implementations.
@@ -65,27 +69,41 @@ package struct CapitalizeFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        let inputString = token.stringValue
+        // Handle special cases for boolean values
+        let inputString: String
+        switch token {
+        case .bool(let value):
+            // Boolean values should be converted to "true" or "false" strings
+            inputString = value ? "true" : "false"
+        default:
+            // For all other types, use the standard stringValue property
+            inputString = token.stringValue
+        }
         
+        // Empty strings should return empty string, not nil
         guard inputString.count > 0 else {
-            return .nil
+            return .string("")
         }
         
-        var firstWord: String?
-        var firstWordRange: Range<String.Index>?
-        
-        inputString.enumerateSubstrings(in: inputString.startIndex..., options: .byWords) {
-            (word, range, _, stop) in
-            
-            firstWord = word
-            firstWordRange = range
-            stop = true
-        }
-        
-        guard let word = firstWord, let range = firstWordRange else {
+        // Find the first character in the string
+        guard let firstChar = inputString.first else {
             return .string(inputString)
         }
         
-        return .string(inputString.replacingCharacters(in: range, with: word.localizedCapitalized))
+        // Get the uppercase version of the first character
+        let uppercasedFirst = String(firstChar).uppercased()
+        
+        // If the string is only one character, return just the uppercased character
+        if inputString.count == 1 {
+            return .string(uppercasedFirst)
+        }
+        
+        // Otherwise, combine the uppercase first character with the lowercase rest
+        // Get everything after the first character
+        let startIndex = inputString.index(after: inputString.startIndex)
+        let remainingString = String(inputString[startIndex...])
+        
+        // Return the capitalized first character + the lowercase rest
+        return .string(uppercasedFirst + remainingString.lowercased())
     }
 }

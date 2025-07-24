@@ -1,10 +1,10 @@
 import Foundation
 
-/// Implements the `last` filter, which returns the last element of an array or character of a string.
+/// Implements the `last` filter, which returns the last element of an array.
 /// 
-/// The `last` filter extracts the final element from collections. When applied to an array, it
-/// returns the last element. When applied to a string, it returns the last character as a
-/// single-character string. For empty collections or non-collection types, it returns nil.
+/// The `last` filter extracts the final element from arrays. When applied to an array, it
+/// returns the last element. For empty arrays or non-array types (including strings), it 
+/// returns nil. This behavior matches python-liquid and other Liquid implementations.
 ///
 /// ## Examples
 ///
@@ -14,10 +14,10 @@ import Foundation
 /// // With arr = ["a", "b", "c"], outputs: "c"
 /// ```
 ///
-/// String usage:
+/// String usage (returns nil):
 /// ```liquid
 /// {{ "hello" | last }}
-/// // Outputs: "o"
+/// // Outputs: "" (nil renders as empty string)
 /// ```
 ///
 /// Mixed array types:
@@ -32,24 +32,19 @@ import Foundation
 /// // With arr = [], outputs: ""
 /// ```
 ///
-/// Range usage:
-/// ```liquid
-/// {{ (1..5) | last }}
-/// // Outputs: "5"
-/// ```
 ///
-/// Hash/dictionary usage:
+/// Non-array types return nil:
 /// ```liquid
+/// {{ 42 | last }}
+/// // Outputs: "" (nil renders as empty string)
+/// 
 /// {{ hash | last }}
-/// // With hash = {"a": 1, "b": 2}, may output: "2" or the last value based on iteration order
+/// // With hash = {"a": 1, "b": 2}, outputs: "" (nil renders as empty string)
 /// ```
 ///
-/// - Important: When applied to a hash/dictionary, `last` behavior may vary between implementations.
-///   Some return the last key-value pair as an array, others return just the value. The order
-///   depends on the underlying hash implementation.
-///
-/// - Important: Unlike some Liquid implementations, this filter returns an empty string representation
-///   when applied to non-collection types (like numbers) rather than the value itself.
+/// - Important: This filter only operates on arrays. All non-array types (including strings,
+///   numbers, booleans, dictionaries, and ranges) return nil, which matches the behavior
+///   of python-liquid and ensures consistency across implementations.
 ///
 /// - SeeAlso: ``FirstFilter`` for getting the first element
 /// - SeeAlso: [LiquidJS last filter](https://liquidjs.com/filters/last.html)
@@ -65,16 +60,22 @@ package struct LastFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // The last filter only operates on arrays, returning the final element
+        // All other types (including strings) return nil to match python-liquid behavior
         switch token {
         case .array(let array):
+            // For arrays, return the last element if it exists
+            // Empty arrays return nil
             return array.last ?? .nil
-        case .string(let string):
-            if let lastCharacter = string.last {
-                return .string(String(lastCharacter))
-            } else {
-                return .nil
-            }
-        default:
+            
+        case .string(_):
+            // Strings are not treated as character arrays in python-liquid
+            // They return nil when passed to the last filter
+            return .nil
+            
+        case .integer(_), .decimal(_), .bool(_), .nil, .dictionary(_), .range(_):
+            // All non-array types return nil
+            // This includes numbers, booleans, dictionaries, and ranges
             return .nil
         }
     }

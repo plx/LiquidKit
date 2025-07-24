@@ -1,83 +1,82 @@
 
+import Foundation
+
 /// Implements the `>=` operator, which tests whether the left value is greater than or equal to the right value.
-/// 
-/// The greater than or equal operator performs numeric comparisons between values. When used with numeric
-/// types (integers and decimals), it performs a standard mathematical comparison returning true when the
-/// left operand is greater than or equal to the right operand. The operator uses numeric coercion to
-/// convert values to `Double` for comparison, which allows comparing integers with decimals seamlessly.
-/// 
-/// Non-numeric values are handled through the `numericComparisonValue` property, which converts values
-/// to `Double` for comparison. Strings that can be parsed as numbers are converted to their numeric
-/// representation, while strings that cannot be parsed and other non-numeric types (nil, bool, array,
-/// dictionary) are treated as 0.0. This behavior can lead to unexpected results when comparing
-/// non-numeric values, as they will often evaluate to equal (both being 0.0).
-/// 
-/// The operator is commonly used in conditional statements and loops to control flow based on numeric
-/// thresholds or boundaries. Unlike the strict greater than operator, this operator includes equality
-/// in its comparison, making it useful for inclusive range checks.
+///
+/// The greater than or equal operator performs type-aware comparisons. Numeric types (integers and decimals) 
+/// can be compared with each other using standard mathematical comparison rules, including equality. Strings 
+/// are compared using lexicographic ordering when both operands are strings, also including equality. 
+/// Comparing values of incompatible types (such as strings with numbers, or nil with any other type) returns 
+/// false, matching the behavior of standard Liquid implementations like liquidjs and python-liquid.
+///
+/// This operator extends the behavior of the greater than operator (`>`) by also returning true when the
+/// operands are equal. It is commonly used in conditional statements and loops to control flow based on
+/// inclusive range checks and boundary conditions.
 /// 
 /// ## Examples
-/// 
+///
 /// Basic numeric comparisons:
 /// ```liquid
-/// {% if 10 >= 5 %}
-///   This will print
+/// {% if 650 >= 100 %}
+///   This is true
 /// {% endif %}
-/// 
-/// {% if 5 >= 5 %}
-///   This will also print (equality case)
+///
+/// {% if 5.5 >= 3.2 %}
+///   This is true
 /// {% endif %}
-/// 
-/// {% if 3 >= 7 %}
-///   This will not print
+///
+/// {% if 10 >= 10 %}
+///   This is true (includes equality)
+/// {% endif %}
+///
+/// {% if 5 >= 10 %}
+///   This is false
 /// {% endif %}
 /// ```
-/// 
+///
 /// Mixed integer and decimal comparisons:
 /// ```liquid
 /// {% if 10.5 >= 10 %}
-///   This will print
+///   This is true
 /// {% endif %}
-/// 
+///
 /// {% if 10 >= 10.0 %}
-///   This will print (integers and decimals compare correctly)
+///   This is true (integers and decimals can be compared)
 /// {% endif %}
 /// ```
-/// 
-/// String to number conversions:
+///
+/// String comparisons use lexicographic ordering:
 /// ```liquid
-/// {% if "15" >= 10 %}
-///   This will print (string "15" converts to 15.0)
+/// {% if 'bbb' >= 'aaa' %}
+///   This is true (lexicographic comparison)
 /// {% endif %}
-/// 
-/// {% if "5.5" >= 5 %}
-///   This will print (string "5.5" converts to 5.5)
+///
+/// {% if 'hello' >= 'hello' %}
+///   This is true (equality case)
+/// {% endif %}
+///
+/// {% if 'abc' >= 'acb' %}
+///   This is false (lexicographic comparison)
 /// {% endif %}
 /// ```
-/// 
-/// Edge cases with non-numeric values:
+///
+/// Type compatibility:
 /// ```liquid
-/// {% if "hello" >= 0 %}
-///   This will print (non-numeric string converts to 0.0, and 0.0 >= 0 is true)
+/// {% if 'hello' >= 5 %}
+///   This is false (type mismatch)
 /// {% endif %}
-/// 
-/// {% if nil >= 0 %}
-///   This will print (nil converts to 0.0)
-/// {% endif %}
-/// 
+///
 /// {% if true >= false %}
-///   This will print (booleans convert to 0.0, so 0.0 >= 0.0 is true)
+///   This is false (booleans cannot be compared)
 /// {% endif %}
 /// ```
 /// 
-/// - Important: Unlike some programming languages, Liquid does not support string comparisons with
-///   relational operators. Attempting to compare non-numeric strings will result in both operands
-///   being treated as 0.0, which may produce unexpected results. Use the `==` operator for string
-///   equality checks instead.
-/// 
-/// - Warning: Be cautious when using this operator with variables that might contain non-numeric
-///   values. The automatic conversion to 0.0 for non-numeric values can lead to logic errors.
-///   Always validate or filter your data when the type might be ambiguous.
+/// - Important: This operator requires compatible types for comparison. Comparing strings with
+///              numbers, or any non-numeric type with numbers, returns false rather than attempting
+///              type coercion. This matches the behavior of liquidjs and python-liquid.
+///
+/// - Note: Integer and decimal values can be compared with each other through automatic numeric
+///         conversion, but all other type combinations are considered incompatible.
 /// 
 /// - SeeAlso: ``GreaterThanOperator``
 /// - SeeAlso: ``LessThanOperator``
@@ -90,7 +89,38 @@ public struct GreaterThanOrEqualOperator: Operator {
   public static let operatorIdentifier: String = ">="
   
   public func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value {
-    .bool(lhs.numericComparisonValue >= rhs.numericComparisonValue)
+    // Match types exactly for comparison - follows the same pattern as GreaterThanOperator
+    switch (lhs, rhs) {
+    // Numeric comparisons: integer and decimal can be compared
+    case let (.integer(left), .integer(right)):
+      // Direct integer comparison - includes equality
+      return .bool(left >= right)
+      
+    case let (.decimal(left), .decimal(right)):
+      // Direct decimal comparison - includes equality
+      return .bool(left >= right)
+      
+    case let (.integer(left), .decimal(right)):
+      // Convert integer to decimal for comparison - includes equality
+      let leftDecimal = Decimal(left)
+      return .bool(leftDecimal >= right)
+      
+    case let (.decimal(left), .integer(right)):
+      // Convert integer to decimal for comparison - includes equality
+      let rightDecimal = Decimal(right)
+      return .bool(left >= rightDecimal)
+      
+    // String comparisons: lexicographic ordering with equality
+    case let (.string(left), .string(right)):
+      // Lexicographic string comparison - includes equality
+      return .bool(left >= right)
+      
+    // All other type combinations return false
+    // This matches the behavior of liquidjs/python-liquid where
+    // comparing incompatible types either throws an error or returns false
+    default:
+      return .bool(false)
+    }
   }
   
   @inlinable

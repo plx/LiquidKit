@@ -4,13 +4,31 @@ import Foundation
 ///
 /// The `split` filter breaks a string into an array of substrings based on a delimiter.
 /// This is commonly used to convert comma-separated values or other delimited strings
-/// into arrays that can be iterated over or further processed. The filter requires one
-/// parameter: the separator string to split on.
+/// into arrays that can be iterated over or further processed.
 ///
-/// When the separator is an empty string, the filter splits the input into individual
-/// characters. When the separator is not found in the input string, the filter returns
-/// an array containing the original string as its only element. The filter preserves
+/// When the separator is an empty string or omitted, the filter splits the input into
+/// individual characters. When the separator is not found in the input string, the filter
+/// returns an array containing the original string as its only element. The filter preserves
 /// empty strings that result from consecutive separators.
+///
+/// ## Separator Behavior
+/// 
+/// - **No separator**: If the separator parameter is omitted, the input is split into
+///   individual characters (matching python-liquid behavior)
+/// - **Empty separator**: Explicitly passing an empty string also splits into characters
+/// - **nil separator**: Treated as an empty separator (splits into characters)
+/// - **Non-string separator**: Automatically converted to its string representation
+///
+/// ## Type Conversion
+///
+/// Non-string inputs are automatically converted to their string representation before
+/// splitting:
+/// - **Numbers**: Converted to their decimal representation
+/// - **Booleans**: Converted to "true" or "false"
+/// - **nil**: Returns nil without splitting
+/// - **Arrays**: Rendered as "[]"
+/// - **Dictionaries**: Rendered as "{}"
+/// - **Ranges**: Rendered as "start..end" format
 ///
 /// ## Examples
 ///
@@ -36,6 +54,9 @@ import Foundation
 /// ```liquid
 /// {{ "Hello" | split: "" | join: "#" }}
 /// // Output: "H#e#l#l#o"
+///
+/// {{ "Hello" | split | join: "#" }}
+/// // Output: "H#e#l#l#o" (no separator = split into characters)
 /// ```
 ///
 /// Edge cases:
@@ -45,13 +66,10 @@ import Foundation
 ///
 /// {{ "no-delimiter" | split: "," | first }}
 /// // Output: "no-delimiter" (returns whole string in array)
+///
+/// {{ 12345 | split: "" | join: "-" }}
+/// // Output: "1-2-3-4-5" (converts number to string first)
 /// ```
-///
-/// - Important: The separator parameter is required. Omitting it will result in an error
-///   according to the Liquid specification.
-///
-/// - Warning: This filter only works with string inputs. Non-string values will be
-///   converted to strings before processing, which may produce unexpected results.
 ///
 /// - SeeAlso: ``JoinFilter``, ``FirstFilter``, ``LastFilter``
 /// - SeeAlso: [Shopify Liquid split](https://shopify.github.io/liquid/filters/split/)
@@ -67,22 +85,76 @@ package struct SplitFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
-            return token
+        // Step 1: Convert the input token to a string
+        // Non-string values need to be converted to their string representation first
+        // This matches the behavior of liquidjs and python-liquid
+        let string: String
+        switch token {
+        case .string(let s):
+            // String values pass through unchanged
+            string = s
+        case .integer(let i):
+            // Convert integers to their decimal representation
+            string = String(i)
+        case .decimal(let d):
+            // Convert decimals using String(describing:) to preserve precision
+            string = String(describing: d)
+        case .bool(let b):
+            // Convert booleans to "true" or "false"
+            string = b ? "true" : "false"
+        case .nil:
+            // Special case: nil values should return nil, not be split
+            return .nil
+        case .dictionary:
+            // Dictionaries render as "{}" in Liquid
+            string = "{}"
+        case .array:
+            // Arrays render as "[]" in Liquid
+            string = "[]"
+        case .range(let r):
+            // Ranges render as "start..end" format
+            string = "\(r.lowerBound)..\(r.upperBound)"
         }
         
-        guard let firstParameter = parameters.first else {
-            return token
+        // Step 2: Determine the separator
+        // If no parameter is provided, split into individual characters (python-liquid behavior)
+        let separator: String
+        if parameters.isEmpty {
+            // No separator provided - split into characters
+            separator = ""
+        } else {
+            // Convert the separator parameter to string using the same logic
+            let sepValue = parameters[0]
+            switch sepValue {
+            case .string(let s):
+                separator = s
+            case .integer(let i):
+                separator = String(i)
+            case .decimal(let d):
+                separator = String(describing: d)
+            case .bool(let b):
+                separator = b ? "true" : "false"
+            case .nil:
+                // nil separator is treated as empty string (split into characters)
+                separator = ""
+            case .dictionary:
+                separator = "{}"
+            case .array:
+                separator = "[]"
+            case .range(let r):
+                separator = "\(r.lowerBound)..\(r.upperBound)"
+            }
         }
         
-        let separator = firstParameter.stringValue
-        
+        // Step 3: Perform the split operation
         if separator.isEmpty {
-            // Split into individual characters
+            // Empty separator means split into individual characters
+            // This handles both explicit empty string and missing separator cases
             let characters = string.map { Token.Value.string(String($0)) }
             return .array(characters)
         } else {
-            // Split by separator
+            // Split by the provided separator
+            // components(separatedBy:) preserves empty strings between consecutive separators
             let parts = string.components(separatedBy: separator).map { Token.Value.string($0) }
             return .array(parts)
         }

@@ -39,9 +39,6 @@ import Foundation
 /// - Important: The filter does not accept any parameters. Passing parameters will result \
 ///   in an error in strict Liquid implementations.
 /// 
-/// - Warning: The current implementation returns `nil` for non-string inputs instead of \
-///   converting them to strings first, which differs from the standard Liquid behavior \
-///   shown in the golden-liquid test suite.
 /// 
 /// - SeeAlso: ``Base64DecodeFilter``, ``Base64UrlSafeEncodeFilter``
 /// - SeeAlso: [LiquidJS base64_encode](https://liquidjs.com/filters/base64_encode.html)
@@ -56,14 +53,56 @@ package struct Base64EncodeFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let inputString) = token else {
-            return .nil
+        // The base64_encode filter does not accept any parameters
+        // Throw an error if any parameters are provided, matching strict Liquid behavior
+        guard parameters.isEmpty else {
+            throw TemplateSyntaxError("base64_encode filter does not take any arguments")
         }
         
-        guard let data = inputString.data(using: .utf8) else {
-            return .nil
+        // Handle nil values by returning empty string
+        // This matches the behavior expected by golden-liquid tests
+        guard case .nil = token else {
+            // For all non-nil values, convert to string representation first
+            let stringToEncode: String
+            
+            switch token {
+            case .string(let str):
+                // String values are used directly
+                stringToEncode = str
+            case .integer(let int):
+                // Convert integers to their string representation
+                stringToEncode = String(int)
+            case .decimal(let dec):
+                // Convert decimals to their string representation
+                stringToEncode = String(describing: dec)
+            case .bool(let bool):
+                // Convert booleans to "true" or "false"
+                stringToEncode = bool ? "true" : "false"
+            case .array(let array):
+                // Arrays are concatenated without separators in Liquid
+                stringToEncode = array.map { $0.stringValue }.joined()
+            case .dictionary:
+                // Dictionaries render as empty strings in Liquid
+                stringToEncode = ""
+            case .range(let range):
+                // Ranges should render as their string representation
+                stringToEncode = "\(range.lowerBound)..\(range.upperBound)"
+            case .nil:
+                // This case is handled by the guard above, but needed for exhaustive switch
+                return .string("")
+            }
+            
+            // Convert the string to UTF-8 data and encode to Base64
+            guard let data = stringToEncode.data(using: .utf8) else {
+                // If UTF-8 encoding fails (extremely rare), return empty string
+                return .string("")
+            }
+            
+            // Return the Base64 encoded string
+            return .string(data.base64EncodedString())
         }
         
-        return .string(data.base64EncodedString())
+        // nil values return empty string
+        return .string("")
     }
 }

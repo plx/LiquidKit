@@ -80,21 +80,36 @@ package struct PlusFilter: Filter {
   
   @inlinable
   package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    // If no parameters provided, return the input unchanged
+    // This matches the behavior of other Liquid implementations
     guard !parameters.isEmpty else {
       return token
     }
     
+    // Convert both operands to double values for arithmetic
+    // The doubleValue property handles all type conversions:
+    // - integers: converted to double
+    // - decimals: converted to double  
+    // - strings: parsed as numbers if possible, otherwise 0
+    // - nil: returns nil, which we treat as 0
+    // - other types (bool, array, dict, range): return nil, treated as 0
     let left = token.doubleValue ?? 0
     let right = parameters[0].doubleValue ?? 0
+    
+    // Perform the addition
     let result = left + right
     
-    // If both operands were integers, return an integer
+    // Type preservation logic:
+    // If both original operands were integers AND the result has no fractional part,
+    // return an integer to maintain type consistency
     if case .integer = token,
        case .integer = parameters[0],
        result == Double(Int(result)) {
       return .integer(Int(result))
     }
     
+    // Otherwise return a decimal (even for whole numbers if any operand was decimal)
+    // This ensures precision is maintained for decimal calculations
     return .decimal(Decimal(result))
   }
 }

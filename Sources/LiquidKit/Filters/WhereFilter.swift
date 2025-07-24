@@ -10,9 +10,8 @@ import Foundation
 /// 
 /// The filter supports two modes of operation: truthy filtering (selects items where
 /// the specified property has a truthy value) and equality filtering (selects items
-/// where the property equals a specific value). For arrays of simple values (not objects),
-/// the filter can select values that match the provided parameter. Non-array inputs are
-/// treated as single-element arrays for consistent behavior.
+/// where the property equals a specific value). The filter only processes dictionary
+/// objects within arrays, filtering out any non-dictionary elements.
 /// 
 /// ## Examples
 /// 
@@ -34,11 +33,11 @@ import Foundation
 /// → 5
 /// ```
 /// 
-/// Filtering simple arrays:
+/// Filtering arrays with mixed element types:
 /// ```liquid
-/// {% assign colors = "red,blue,green,blue" | split: "," %}
-/// {{ colors | where: "blue" | join: ", " }}
-/// → "blue, blue"
+/// {% comment %} Non-dictionary elements are filtered out {% endcomment %}
+/// {{ mixed_array | where: "available" }}
+/// → Only dictionary objects with truthy 'available' property
 /// ```
 /// 
 /// Chaining with other filters:
@@ -57,17 +56,17 @@ import Foundation
 /// ```
 /// 
 /// - Important: When using single-parameter mode, the filter selects items where the\
-///   property value is truthy (not nil, false, or empty string). This includes true,\
-///   numbers, non-empty strings, arrays, and dictionaries.
+///   property value is truthy (not nil or false). This includes true, numbers,\
+///   strings (including empty strings), arrays, and dictionaries.
 /// 
 /// - Important: Objects without the specified property are excluded from the result.\
 ///   The filter does not throw an error for missing properties.
 /// 
-/// - Important: For non-dictionary array elements, the filter compares the element\
-///   directly with the first parameter rather than looking for a property.
+/// - Important: The filter only works on arrays of dictionary objects. Non-dictionary\
+///   elements in arrays are ignored and filtered out.
 /// 
-/// - Warning: The current implementation has TODO comments indicating potential\
-///   improvements needed for nil handling and range expansion.
+/// - Important: For non-array, non-dictionary inputs (strings, numbers, etc.), the\
+///   filter returns an empty array since the where filter is designed for object filtering.
 /// 
 /// - SeeAlso: ``MapFilter`` for extracting property values from filtered results
 /// - SeeAlso: ``SelectFilter`` for more complex filtering logic
@@ -85,63 +84,80 @@ package struct WhereFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        // Handle different input types
+        // Extract the property name from the first parameter
+        guard let firstParameter = parameters.first else {
+            // If no property parameter provided, return the original input as an array
+            // This matches the behavior when no filtering criteria is specified
+            switch token {
+            case .array(let array):
+                return .array(array)
+            case .dictionary:
+                return .array([token])
+            default:
+                return .array([])
+            }
+        }
+        
+        // Get the property name to filter by
+        let key = firstParameter.stringValue
+        
+        // Handle different input types to create array of items to filter
         let arrayToFilter: [Token.Value]
         switch token {
         case .array(let array):
+            // Use the array directly
             arrayToFilter = array
         case .dictionary:
-            // For dictionaries, treat as an array with the dictionary as a single element
+            // Treat single dictionary as an array with one element
             arrayToFilter = [token]
         case .nil:
-            // TODO: Should this return nil or empty array?
+            // Nil input returns empty array
             return .array([])
-        case .string, .integer, .decimal, .bool:
-            // Treat single values as single-element arrays
-            arrayToFilter = [token]
-        case .range:
-            // TODO: Should ranges be expanded to arrays?
-            arrayToFilter = [token]
+        default:
+            // Non-array, non-dictionary inputs (string, integer, decimal, bool, range)
+            // return empty array since where filter only works on objects
+            return .array([])
         }
-        
-        guard let firstParameter = parameters.first else {
-            // TODO: Should throw an error for missing property parameter
-            return .array(arrayToFilter)
-        }
-        
-        let key = firstParameter.stringValue
         
         if parameters.count >= 2 {
-            // Select items where property/value equals the specified value
+            // Two-parameter mode: filter by exact property-value match
             let valueToMatch = parameters[1]
             
             let filteredArray = arrayToFilter.filter { item in
-                if case .dictionary(let dict) = item {
-                    // For dictionaries, check the property value
-                    guard let propertyValue = dict[key] else {
-                        return false // Exclude items without the property
-                    }
-                    return propertyValue == valueToMatch
-                } else {
-                    // For non-dictionary items, compare directly if key matches value
-                    return item == firstParameter
+                // Only process dictionary items (objects with properties)
+                guard case .dictionary(let dict) = item else {
+                    // Non-dictionary items are filtered out
+                    return false
                 }
+                
+                // Check if the item has the specified property
+                guard let propertyValue = dict[key] else {
+                    // Items without the property are excluded
+                    return false
+                }
+                
+                // Include item only if property value exactly matches the target value
+                return propertyValue == valueToMatch
             }
             
             return .array(filteredArray)
         } else {
-            // Select items where property is truthy or value matches
+            // One-parameter mode: filter by truthy property value
             let filteredArray = arrayToFilter.filter { item in
-                if case .dictionary(let dict) = item {
-                    // For dictionaries, check if property is truthy
-                    guard let propertyValue = dict[key] else {
-                        return false // Exclude items without the property
-                    }
-                    return propertyValue.isTruthy
-                } else {
-                    // For non-dictionary items, select if they match the parameter
-                    return item == firstParameter
+                // Only process dictionary items (objects with properties)
+                guard case .dictionary(let dict) = item else {
+                    // Non-dictionary items are filtered out
+                    return false
                 }
+                
+                // Check if the item has the specified property
+                guard let propertyValue = dict[key] else {
+                    // Items without the property are excluded (missing property is falsy)
+                    return false
+                }
+                
+                // Include item only if property value is truthy
+                return propertyValue.isTruthy
             }
             
             return .array(filteredArray)

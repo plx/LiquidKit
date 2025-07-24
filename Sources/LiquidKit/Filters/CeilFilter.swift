@@ -52,7 +52,7 @@ import Darwin
 /// 
 /// - Important: Non-numeric values (including objects, arrays, and non-numeric strings) \
 ///   are treated as zero rather than causing an error. This follows the Liquid convention \
-///   of graceful error handling.
+///   of graceful error handling and matches the behavior of liquidjs and python-liquid.
 /// 
 /// - Warning: The filter does not accept any parameters. Passing parameters will result \
 ///   in an error in strict Liquid implementations.
@@ -71,10 +71,53 @@ package struct CeilFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard let inputDouble = token.doubleValue else {
-            return .nil
+        // Handle string values specially to trim whitespace
+        if case .string(let string) = token {
+            // Trim whitespace from strings before parsing
+            let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // If empty after trimming, return 0
+            if trimmed.isEmpty {
+                return .integer(0)
+            }
+            
+            // Try to parse the trimmed string as a number
+            guard
+              let inputDouble = Double(trimmed),
+              inputDouble.isFinite
+            else {
+                return .integer(0)
+            }
+            
+            // Apply ceiling function
+            let ceiledValue = Darwin.ceil(inputDouble)
+            
+            // Return as integer if possible, otherwise as decimal
+            if ceiledValue.isFinite && ceiledValue >= Double(Int.min) && ceiledValue <= Double(Int.max) {
+                return .integer(Int(ceiledValue))
+            } else {
+                return .decimal(Decimal(ceiledValue))
+            }
         }
         
-        return .decimal(Decimal(Int(Darwin.ceil(inputDouble))))
+        // For non-string values, use the standard doubleValue conversion
+        guard let inputDouble = token.doubleValue else {
+            // If the input cannot be converted to a number, return 0
+            // This matches python-liquid and liquidjs behavior
+            return .integer(0)
+        }
+        
+        // Apply the ceiling function to round up
+        let ceiledValue = Darwin.ceil(inputDouble)
+        
+        // Check if the ceiled value is within the range of Int
+        // This prevents crashes when dealing with very large numbers
+        if ceiledValue.isFinite && ceiledValue >= Double(Int.min) && ceiledValue <= Double(Int.max) {
+            // If it fits in an Int, return as an integer
+            return .integer(Int(ceiledValue))
+        } else {
+            // If it's too large for Int, return as a decimal
+            return .decimal(Decimal(ceiledValue))
+        }
     }
 }

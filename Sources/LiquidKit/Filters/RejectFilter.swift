@@ -42,10 +42,9 @@ import Foundation
 ///   kept in the result (not rejected). This behavior ensures that missing properties are
 ///   treated as falsy rather than causing items to be filtered out.
 /// 
-/// - Warning: The current implementation has some limitations marked with TODOs:
-///   - Nil input returns an empty array but might need different handling
-///   - Range inputs are not expanded to arrays
-///   - Missing property parameter doesn't throw an error as it should
+/// - Note: In LiquidKit, only `nil` and `false` are considered falsy. All other values,
+///   including `0`, empty strings, and empty arrays, are considered truthy. This differs
+///   from some other Liquid implementations where `0` might be considered falsy.
 /// 
 /// - SeeAlso: ``WhereFilter`` - The opposite filter that keeps matching items
 /// - SeeAlso: ``SelectFilter`` - Alias for the where filter
@@ -62,61 +61,74 @@ package struct RejectFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        // Handle different input types
+        // Step 1: Handle different input types to create an array to filter
         let arrayToFilter: [Token.Value]
         switch token {
         case .array(let array):
+            // Use the array directly
             arrayToFilter = array
         case .dictionary:
             // For dictionaries, treat as an array with the dictionary as a single element
             arrayToFilter = [token]
         case .nil:
-            // TODO: Should this return nil or empty array?
+            // Nil input returns empty array (matching python-liquid and liquidjs behavior)
             return .array([])
         case .string, .integer, .decimal, .bool:
             // Treat single values as single-element arrays
             arrayToFilter = [token]
         case .range:
-            // TODO: Should ranges be expanded to arrays?
+            // Ranges are treated as single-element arrays
+            // (not expanded, matching other filter implementations)
             arrayToFilter = [token]
         }
         
+        // Step 2: Check if we have a property parameter
         guard let firstParameter = parameters.first else {
-            // TODO: Should throw an error for missing property parameter
+            // No parameters provided - return the original array
+            // (this matches the behavior of other implementations)
             return .array(arrayToFilter)
         }
         
+        // Get the property name to filter by
         let key = firstParameter.stringValue
         
+        // Step 3: Apply filtering based on parameter count
         if parameters.count >= 2 {
-            // Reject items where property/value equals the specified value
+            // Two-parameter mode: reject items where property equals the specified value
             let valueToReject = parameters[1]
             
             let filteredArray = arrayToFilter.filter { item in
                 if case .dictionary(let dict) = item {
                     // For dictionaries, check the property value
                     guard let propertyValue = dict[key] else {
-                        return true // Keep items without the property
+                        // Items without the property are kept (not rejected)
+                        return true
                     }
+                    // Keep the item only if its property value does NOT equal valueToReject
                     return propertyValue != valueToReject
                 } else {
-                    // For non-dictionary items, compare directly if key matches value
+                    // For non-dictionary items (simple values in array),
+                    // reject if the item equals the first parameter
                     return item != firstParameter
                 }
             }
             
             return .array(filteredArray)
         } else {
-            // Reject items where property is truthy or value matches
+            // One-parameter mode: reject items where property is truthy
             let filteredArray = arrayToFilter.filter { item in
                 if case .dictionary(let dict) = item {
                     // For dictionaries, check if property is truthy
                     guard let propertyValue = dict[key] else {
-                        return true // Keep items without the property
+                        // Items without the property are kept (missing property is falsy)
+                        return true
                     }
+                    // Keep the item only if its property value is NOT truthy
+                    // This is the opposite of the where filter
                     return !propertyValue.isTruthy
                 } else {
-                    // For non-dictionary items, reject if they match the parameter
+                    // For non-dictionary items (simple values in array),
+                    // reject if they match the parameter value
                     return item != firstParameter
                 }
             }

@@ -3,7 +3,8 @@ import Foundation
 /// Implements the `strip` filter, which removes whitespace from both ends of a string.
 ///
 /// The `strip` filter removes all leading and trailing whitespace characters from a string,
-/// including spaces, tabs, newlines, and carriage returns. The filter does not affect
+/// including spaces, tabs, newlines, and carriage returns. Non-string values are first
+/// converted to their string representation before stripping. The filter does not affect
 /// whitespace within the string - only whitespace at the beginning and end is removed.
 /// This is useful for cleaning up user input or formatting text that may have unwanted
 /// padding.
@@ -39,6 +40,8 @@ import Foundation
 /// {{ "no-whitespace" | strip }}       // Output: "no-whitespace" (unchanged)
 /// {{ "   " | strip }}                 // Output: "" (all whitespace)
 /// {{ 123 | strip }}                   // Output: "123" (converts to string first)
+/// {{ true | strip }}                  // Output: "true" (boolean conversion)
+/// {{ false | strip }}                 // Output: "false" (boolean conversion)
 /// ```
 ///
 /// - Important: The filter only removes whitespace from the beginning and end of the
@@ -61,11 +64,31 @@ package struct StripFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
-            return token
+        // Convert the input token to a string representation
+        // This matches liquidjs and python-liquid behavior where non-string values
+        // are converted to strings before stripping
+        let stringValue: String
+        switch token {
+        case .bool(let value):
+            // Boolean values should be converted to "true" or "false" strings
+            // to match liquidjs and python-liquid behavior
+            stringValue = value ? "true" : "false"
+        default:
+            // For all other types, use the standard stringValue property
+            stringValue = token.stringValue
         }
         
-        // Remove leading and trailing whitespace
-        return .string(string.trimmingCharacters(in: .whitespacesAndNewlines))
+        // Remove leading and trailing whitespace characters
+        // Uses Foundation's .whitespacesAndNewlines character set which includes:
+        // - Space (U+0020)
+        // - Tab (U+0009)
+        // - Newline (U+000A)
+        // - Form feed (U+000C)
+        // - Carriage return (U+000D)
+        // - Various Unicode whitespace characters like non-breaking space (U+00A0)
+        let strippedString = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Return the stripped string as a Token.Value.string
+        return .string(strippedString)
     }
 }

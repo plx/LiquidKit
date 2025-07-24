@@ -10,7 +10,7 @@ import Foundation
 /// 
 /// Both the input value and the parameter must be numeric or convertible to numeric values.
 /// String representations of numbers are automatically converted. If either value cannot be
-/// converted to a number, special handling applies based on which value is non-numeric.
+/// converted to a number, it is treated as 0, following the behavior of python-liquid.
 /// 
 /// ## Examples
 /// 
@@ -38,13 +38,11 @@ import Foundation
 /// {{ 5 | at_least: nil }}       → 5
 /// ```
 /// 
-/// > Important: When the input value is non-numeric but the parameter is numeric, the filter
-/// > returns the parameter value (enforcing the minimum). When the parameter is non-numeric,
-/// > the filter returns 0. This behavior differs from some other Liquid implementations
-/// > that might throw errors or return the original value.
+/// > Important: When either value cannot be converted to a number, it is treated as 0.
+/// > This matches the behavior of python-liquid and ensures consistent results.
 /// 
 /// > Warning: The at_least filter requires exactly one numeric parameter. Missing parameters
-/// > or multiple parameters will cause an error in strict Liquid implementations.
+/// > will be treated as 0, and extra parameters will be ignored.
 /// 
 /// - SeeAlso: ``AtMostFilter``, ``ClampFilter``
 /// - SeeAlso: [LiquidJS at_least](https://liquidjs.com/filters/at_least.html)
@@ -60,13 +58,74 @@ package struct AtLeastFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard
-            let inputDecimal = token.decimalValue,
-            let parameterDecimal = parameters.first?.decimalValue
-        else {
-            return .nil
+        // Get the decimal value of the input, defaulting to 0 if not numeric
+        // This matches python-liquid behavior where non-numeric values are treated as 0
+        let inputDecimal = token.decimalValue ?? 0
+        
+        // Get the decimal value of the parameter, defaulting to 0 if not provided or not numeric
+        // This matches python-liquid behavior where non-numeric values are treated as 0
+        let parameterDecimal = parameters.first?.decimalValue ?? 0
+        
+        // Return the maximum of the two values
+        // This ensures the result is at least the specified minimum
+        let result = max(inputDecimal, parameterDecimal)
+        
+        // Determine if we should return an integer or decimal
+        // We return an integer if:
+        // 1. Both input and parameter were originally integers, OR
+        // 2. The result can be exactly represented as an integer AND at least one of the values was missing/nil/non-numeric
+        
+        // Check if both original values were integers
+        let inputIsInteger = if case .integer = token { true } else { false }
+        let paramIsInteger = if let param = parameters.first, case .integer = param { true } else { false }
+        
+        // Check if the values are numeric strings that convert to integers
+        let inputIsIntegerString: Bool = {
+            if case .string(let str) = token,
+               let decimal = Decimal(string: str) {
+                let doubleVal = NSDecimalNumber(decimal: decimal).doubleValue
+                return doubleVal.truncatingRemainder(dividingBy: 1) == 0
+            }
+            return false
+        }()
+        
+        let paramIsIntegerString: Bool = {
+            if let param = parameters.first,
+               case .string(let str) = param,
+               let decimal = Decimal(string: str) {
+                let doubleVal = NSDecimalNumber(decimal: decimal).doubleValue
+                return doubleVal.truncatingRemainder(dividingBy: 1) == 0
+            }
+            return false
+        }()
+        
+        // Check if the result can be exactly represented as an integer
+        let doubleResult = NSDecimalNumber(decimal: result).doubleValue
+        if doubleResult.truncatingRemainder(dividingBy: 1) == 0,
+           doubleResult >= Double(Int.min),
+           doubleResult <= Double(Int.max) {
+            let intResult = Int(doubleResult)
+            // If both were integers (actual or string representations), return integer
+            if (inputIsInteger || inputIsIntegerString) && (paramIsInteger || paramIsIntegerString) {
+                return .integer(intResult)
+            }
+            
+            // If one was nil/missing/non-numeric and the other was integer, return integer
+            // This handles cases like nil|at_least:5 → 5 (not 5.0)
+            let inputWasNonNumeric = token.decimalValue == nil
+            let paramWasNonNumeric = parameters.isEmpty || parameters.first?.decimalValue == nil
+            
+            if (inputWasNonNumeric && paramIsInteger) || (paramWasNonNumeric && inputIsInteger) {
+                return .integer(intResult)
+            }
+            
+            // Special case: if both were non-numeric (result is 0), return integer 0
+            if inputWasNonNumeric && paramWasNonNumeric && intResult == 0 {
+                return .integer(0)
+            }
         }
         
-        return .decimal(max(inputDecimal, parameterDecimal))
+        // For all other cases (mixed types, decimals, etc.), return as decimal
+        return .decimal(result)
     }
 }

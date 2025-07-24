@@ -8,10 +8,11 @@ import Foundation
 /// particularly when dealing with repeated patterns where you only want to affect the
 /// first instance.
 /// 
-/// Like other string filters, `remove_first` only operates on string inputs. If the input
-/// is not a string, or if the substring parameter is missing or not a string, the original
-/// value is returned unchanged. The search is case-sensitive and starts from the beginning
-/// of the string.
+/// Following python-liquid behavior, `remove_first` will coerce non-string inputs to strings
+/// before processing. Numbers become their string representation, booleans become "true" or 
+/// "false", and nil becomes an empty string. Complex types like arrays and dictionaries are
+/// not coerced and are returned unchanged. The search is case-sensitive and starts from the
+/// beginning of the string.
 /// 
 /// - Example: Basic usage
 /// ```liquid
@@ -37,6 +38,15 @@ import Foundation
 /// <!-- Output: Hello, world! -->
 /// ```
 /// 
+/// - Example: Non-string input coercion
+/// ```liquid
+/// {{ 123 | remove_first: "2" }}
+/// <!-- Output: 13 -->
+/// 
+/// {{ true | remove_first: "ru" }}
+/// <!-- Output: te -->
+/// ```
+/// 
 /// - Important: Only the FIRST occurrence is removed. To remove all occurrences, use the
 ///   `remove` filter instead. The search always starts from the beginning of the string
 ///   and stops after finding and removing the first match.
@@ -60,22 +70,61 @@ package struct RemoveFirstFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
+        // Coerce input to string - matches python-liquid behavior
+        // If input is not a string, convert it to a string representation
+        let string: String
+        switch token {
+        case .string(let s):
+            string = s
+        case .nil:
+            // nil converts to empty string in Liquid
+            string = ""
+        case .bool(let b):
+            // Booleans convert to "true" or "false"
+            string = b ? "true" : "false"
+        case .integer(let i):
+            // Integers convert to their string representation
+            string = String(i)
+        case .decimal(let d):
+            // Decimals convert to their string representation
+            string = String(describing: d)
+        case .array, .dictionary, .range:
+            // Complex types are not coerced - return original value
             return token
         }
         
-        guard parameters.count >= 1,
-              case .string(let substring) = parameters[0] else {
-            return token
+        // Ensure we have at least one parameter
+        guard parameters.count >= 1 else {
+            return .string(string)
         }
         
-        // Find first occurrence and replace only that
+        // Coerce the substring parameter to string as well
+        let substring: String
+        switch parameters[0] {
+        case .string(let s):
+            substring = s
+        case .nil:
+            // nil parameter means no substring to remove
+            return .string(string)
+        case .bool(let b):
+            substring = b ? "true" : "false"
+        case .integer(let i):
+            substring = String(i)
+        case .decimal(let d):
+            substring = String(describing: d)
+        case .array, .dictionary, .range:
+            // Complex types cannot be used as substrings
+            return .string(string)
+        }
+        
+        // Find the first occurrence of substring and remove it
         if let range = string.range(of: substring) {
             var result = string
             result.replaceSubrange(range, with: "")
             return .string(result)
         }
         
-        return token
+        // If substring not found, return original string
+        return .string(string)
     }
 }

@@ -73,10 +73,21 @@ package struct JoinFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .array(let array) = token else {
+        // Handle different input types
+        let arrayToJoin: [Token.Value]
+        switch token {
+        case .array(let array):
+            // Already an array, use it directly
+            arrayToJoin = array
+        case .range(let range):
+            // Convert range to array of integers
+            arrayToJoin = range.map { .integer($0) }
+        default:
+            // Non-array values pass through unchanged
             return token
         }
         
+        // Determine separator from first parameter, default to space
         let separator: String
         if let firstParameter = parameters.first {
             separator = firstParameter.stringValue
@@ -84,7 +95,22 @@ package struct JoinFilter: Filter {
             separator = " "
         }
         
-        let stringArray = array.map { $0.stringValue }
+        // Convert each element to string representation
+        let stringArray = arrayToJoin.map { element in
+            switch element {
+            case .bool(let value):
+                // Explicitly handle booleans to show "true"/"false"
+                return value ? "true" : "false"
+            case .dictionary:
+                // Dictionaries render as "{}" in join output
+                return "{}"
+            default:
+                // Use default stringValue conversion for other types
+                return element.stringValue
+            }
+        }
+        
+        // Join the strings with the separator
         return .string(stringArray.joined(separator: separator))
     }
 }

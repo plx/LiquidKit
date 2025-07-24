@@ -65,10 +65,10 @@ import Foundation
 /// - Important: Text without whitespace (common in Chinese, Japanese, etc.) is treated as a single word \
 ///   and will not be truncated regardless of the word count parameter.
 /// 
-/// - Warning: Providing an undefined variable as the word count parameter will result in an error. \
-///   However, an undefined ellipsis parameter is treated as an empty string.
+/// - Note: When the word count parameter is undefined or non-numeric, the default value of 15 is used. \
+///   When the ellipsis parameter is undefined (nil), it is treated as an empty string.
 /// 
-/// - Warning: Providing more than two arguments will result in an error.
+/// - Note: Extra parameters beyond the first two are ignored.
 /// 
 /// - SeeAlso: ``TruncateFilter`` - Truncates to a number of characters instead of words
 /// - SeeAlso: ``SplitFilter`` - Splits a string into an array of words
@@ -85,41 +85,79 @@ package struct TruncateWordsFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Return non-string values unchanged
         guard case .string(let string) = token else {
             return token
         }
         
-        // Default values
+        // Default values - matches liquidjs and python-liquid behavior
         var wordCount = 15
         var ellipsis = "..."
         
-        // Parse parameters
+        // Parse first parameter (word count)
         if parameters.count >= 1 {
             switch parameters[0] {
             case .integer(let w):
+                // Use integer value directly
                 wordCount = w
+            case .decimal(let d):
+                // Convert decimal to integer (truncate)
+                wordCount = NSDecimalNumber(decimal: d).intValue
             case .string(let s):
+                // Try to parse string as integer
                 if let w = Int(s) {
                     wordCount = w
                 }
+                // If string is not numeric, keep default value of 15
             default:
+                // For any other type (nil, bool, array, dict), keep default value of 15
                 break
             }
         }
         
-        if parameters.count >= 2, case .string(let e) = parameters[1] {
-            ellipsis = e
+        // Parse second parameter (ellipsis string)
+        if parameters.count >= 2 {
+            switch parameters[1] {
+            case .string(let e):
+                // Use provided string as ellipsis
+                ellipsis = e
+            case .nil:
+                // Treat nil/undefined as empty string (matches liquidjs/python-liquid)
+                ellipsis = ""
+            case .integer(let i):
+                // Convert integer to string representation
+                ellipsis = String(i)
+            case .decimal(let d):
+                // Convert decimal to string representation  
+                ellipsis = String(describing: d)
+            case .bool(let b):
+                // Convert boolean to string representation
+                ellipsis = String(b)
+            default:
+                // For arrays/dictionaries, use default ellipsis
+                break
+            }
         }
         
-        // Split string into words
-        let words = string.split(separator: " ", omittingEmptySubsequences: true)
+        // Split string into words using any whitespace as separator
+        // This handles spaces, tabs, newlines, and multiple consecutive whitespace
+        let words = string.split(whereSeparator: \.isWhitespace)
         
-        // If we have fewer words than requested, return as is
+        // Special case: word count of 0 or negative returns first word + ellipsis
+        // This matches the reference implementation behavior
+        if wordCount <= 0 {
+            if words.isEmpty {
+                return .string(string)
+            }
+            return .string(String(words[0]) + ellipsis)
+        }
+        
+        // If we have fewer or equal words than requested, return original string unchanged
         if words.count <= wordCount {
             return .string(string)
         }
         
-        // Take first n words and join with ellipsis
+        // Take first n words, join with single spaces, and append ellipsis
         let truncated = words.prefix(wordCount).joined(separator: " ") + ellipsis
         return .string(truncated)
     }

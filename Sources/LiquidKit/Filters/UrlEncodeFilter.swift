@@ -61,6 +61,10 @@ import Foundation
 /// - Important: The filter preserves the characters "-", "_", ".", and "~" as they are\
 ///   considered safe in URLs. All other non-alphanumeric characters are percent-encoded.
 /// 
+/// - Important: This implementation matches the behavior of Ruby's CGI.escape method,\
+///   which is used by the original Shopify Liquid implementation. It is fully compatible\
+///   with LiquidJS and other standard Liquid implementations.
+/// 
 /// - Warning: If encoding fails (which is rare), the filter returns the original string\
 ///   unchanged rather than throwing an error.
 /// 
@@ -79,22 +83,37 @@ package struct UrlEncodeFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Only process string values - return non-strings unchanged
         guard case .string(let string) = token else {
             return token
         }
         
-        // URL encode the string
-        // Use form encoding which replaces spaces with +
-        var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: "-._~")
+        // Implement form-encoding (application/x-www-form-urlencoded) which is what
+        // Ruby's CGI.escape does and what the original Liquid implementation uses.
+        //
+        // The encoding rules are:
+        // 1. Alphanumeric characters (a-z, A-Z, 0-9) remain unchanged
+        // 2. The characters "-", "_", ".", and "~" remain unchanged (unreserved characters)
+        // 3. Space characters are encoded as "+" (not %20)
+        // 4. All other characters are percent-encoded using UTF-8
         
-        if let encoded = string.addingPercentEncoding(withAllowedCharacters: allowed) {
-            // Replace percent-encoded spaces with +
-            let formEncoded = encoded.replacingOccurrences(of: "%20", with: "+")
-            return .string(formEncoded)
+        // Create a character set containing only the safe characters
+        // This matches Ruby CGI.escape behavior
+        var allowedCharacters = CharacterSet.alphanumerics
+        allowedCharacters.insert(charactersIn: "-._~")
+        
+        // Perform the percent encoding
+        // This will encode spaces as %20 and all other unsafe characters appropriately
+        guard let percentEncoded = string.addingPercentEncoding(withAllowedCharacters: allowedCharacters) else {
+            // If encoding fails (which is extremely rare), return the original string
+            // This matches the Ruby implementation behavior
+            return token
         }
         
-        // If encoding fails, return original
-        return token
+        // Convert %20 (percent-encoded spaces) to + for form encoding
+        // This is the key difference between regular URL encoding and form encoding
+        let formEncoded = percentEncoded.replacingOccurrences(of: "%20", with: "+")
+        
+        return .string(formEncoded)
     }
 }

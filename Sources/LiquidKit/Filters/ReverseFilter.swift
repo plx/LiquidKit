@@ -1,15 +1,15 @@
 import Foundation
 
-/// Implements the `reverse` filter, which reverses the order of elements in an array or characters in a string.
+/// Implements the `reverse` filter, which reverses the order of elements in an array.
 /// 
-/// The `reverse` filter inverts the order of items in a collection. When applied to an array,
-/// it returns a new array with elements in reverse order. When applied to a string, it returns
-/// a new string with characters in reverse order. This filter is particularly useful for
-/// displaying lists in reverse chronological order or for string manipulation tasks.
+/// The `reverse` filter inverts the order of items in an array, returning a new array with
+/// elements in reverse order. When applied to strings or other non-array values, they are
+/// returned unchanged. This behavior matches the standard Liquid implementations in LiquidJS,
+/// Shopify Liquid, and Python Liquid.
 ///
 /// The filter accepts no parameters. If any parameters are provided, they are ignored in this
 /// implementation, though strict Liquid implementations may raise errors for unexpected arguments.
-/// For non-array and non-string input values, the filter returns the original value unchanged.
+/// For non-array input values (including strings), the filter returns the original value unchanged.
 ///
 /// ## Examples
 ///
@@ -20,9 +20,15 @@ import Foundation
 /// <!-- Output: "cherry, banana, apple" -->
 /// ```
 ///
-/// Reversing a string:
+/// Strings are not reversed directly:
 /// ```liquid
 /// {{ "hello" | reverse }}
+/// <!-- Output: "hello" -->
+/// ```
+///
+/// To reverse a string, split it into an array first:
+/// ```liquid
+/// {{ "hello" | split: "" | reverse | join: "" }}
 /// <!-- Output: "olleh" -->
 /// ```
 ///
@@ -36,19 +42,22 @@ import Foundation
 /// <!-- Output: "" -->
 /// ```
 ///
-/// Non-collection values pass through unchanged:
+/// Non-array values pass through unchanged:
 /// ```liquid
 /// {{ 123 | reverse }}
 /// <!-- Output: "123" -->
 /// 
 /// {{ true | reverse }}
 /// <!-- Output: "true" -->
+/// 
+/// {{ "test string" | reverse }}
+/// <!-- Output: "test string" -->
 /// ```
 ///
-/// - Important: When reversing strings, the filter operates on individual characters, not
-///   grapheme clusters. This means complex Unicode characters (like emoji with modifiers)
-///   may not reverse as expected. The implementation uses Swift's native string reversal,
-///   which handles most common cases correctly.
+/// - Important: This filter only reverses arrays. Strings and other non-array values are
+///   returned unchanged. To reverse a string, you must first split it into an array of
+///   characters using the `split` filter, then reverse the array, and finally join it
+///   back together using the `join` filter.
 ///
 /// - Warning: While this implementation ignores extra parameters, the strict Liquid
 ///   specification considers unexpected parameters an error. Code relying on this lenient
@@ -70,10 +79,14 @@ package struct ReverseFilter: Filter {
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
         switch token {
         case .array(let array):
+            // Reverse the array elements and return a new array
             return .array(array.reversed())
-        case .string(let string):
-            return .string(String(string.reversed()))
+        case .string(_):
+            // Strings pass through unchanged to match LiquidJS/Shopify behavior
+            // To reverse a string, users should: string | split: "" | reverse | join: ""
+            return token
         default:
+            // All other types pass through unchanged
             return token
         }
     }

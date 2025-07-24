@@ -9,8 +9,9 @@ import Foundation
 /// whitespace or indentation.
 ///
 /// The filter accepts no parameters. Any parameters provided should cause an error in strict
-/// Liquid implementations. For non-string input values, the filter returns the original value
-/// unchanged, rendering it as a string representation in the output.
+/// Liquid implementations. For non-string input values, the filter first converts them to their
+/// string representation before stripping trailing whitespace, matching the behavior of liquidjs
+/// and python-liquid.
 ///
 /// ## Examples
 ///
@@ -42,6 +43,15 @@ import Foundation
 /// 
 /// {{ 5 | rstrip }}
 /// <!-- Output: "5" -->
+/// 
+/// {{ true | rstrip }}
+/// <!-- Output: "true" -->
+/// 
+/// {{ false | rstrip }}
+/// <!-- Output: "false" -->
+/// 
+/// {{ nil | rstrip }}
+/// <!-- Output: "" -->
 /// ```
 ///
 /// - Important: The filter removes all types of Unicode whitespace from the right side,
@@ -50,9 +60,7 @@ import Foundation
 ///   which may include other Unicode whitespace characters beyond ASCII whitespace.
 ///
 /// - Warning: This implementation accepts extra parameters without error, while strict
-///   Liquid implementations should raise an error for unexpected arguments. The filter
-///   returns non-string values unchanged rather than converting them to strings first,
-///   which may differ from other implementations.
+///   Liquid implementations should raise an error for unexpected arguments.
 ///
 /// - SeeAlso: ``LstripFilter``, ``StripFilter``, ``StripNewlinesFilter``
 /// - SeeAlso: [LiquidJS Documentation](https://liquidjs.com/filters/rstrip.html)
@@ -68,12 +76,25 @@ package struct RstripFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
-            return token
+        // Convert the input token to a string representation
+        let inputString: String
+        
+        // Special handling for boolean values to match liquidjs/python-liquid behavior
+        switch token {
+        case .bool(let value):
+            // Boolean values should be converted to "true" or "false" strings
+            inputString = value ? "true" : "false"
+        case .nil:
+            // nil values should convert to empty string, not return .nil
+            inputString = ""
+        default:
+            // For all other types (string, integer, decimal, array, range, dictionary),
+            // use the standard stringValue property which handles conversion appropriately
+            inputString = token.stringValue
         }
         
-        // Remove trailing whitespace
-        let result = string.replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
+        // Remove trailing whitespace using regex pattern that matches all whitespace at end of string
+        let result = inputString.replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
         return .string(result)
     }
 }

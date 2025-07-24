@@ -145,7 +145,7 @@ func validateEvaluation<ErrorType>(
   additionalVerification: ((ErrorType) throws -> Void)? = nil
 ) throws where ErrorType: Error {
   do {
-    let observed = try filter.evaluate(
+    let _ = try filter.evaluate(
       token: value,
       parameters: parameters
     )

@@ -32,24 +32,18 @@ import Foundation
 /// // With arr = [], outputs: ""
 /// ```
 ///
-/// Range usage:
+/// Non-collection types:
 /// ```liquid
-/// {{ (1..5) | first }}
-/// // Outputs: "1"
+/// {{ 42 | first }}
+/// // Outputs: "" (nil renders as empty string)
+/// 
+/// {{ true | first }}
+/// // Outputs: "" (nil renders as empty string)
 /// ```
 ///
-/// Hash/dictionary usage:
-/// ```liquid
-/// {% assign x = hash | first %}({{ x[0] }},{{ x[1] }})
-/// // With hash = {"b": 1, "c": 2}, outputs: "(b,1)" or "(c,2)" depending on iteration order
-/// ```
-///
-/// - Important: When applied to a hash/dictionary, `first` returns the first key-value pair as a
-///   two-element array `[key, value]`. The order depends on the underlying hash implementation
-///   and may not be predictable.
-///
-/// - Important: Unlike some Liquid implementations, this filter returns an empty string representation
-///   when applied to non-collection types (like numbers) rather than the value itself.
+/// - Important: When applied to non-collection types (numbers, booleans, dictionaries, ranges),
+///   this filter returns nil, which matches the behavior of other Liquid implementations like
+///   liquidjs and python-liquid.
 ///
 /// - SeeAlso: ``LastFilter`` for getting the last element
 /// - SeeAlso: [LiquidJS first filter](https://liquidjs.com/filters/first.html)
@@ -65,16 +59,24 @@ package struct FirstFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // The first filter extracts the initial element from collections
         switch token {
         case .array(let array):
+            // For arrays, return the first element if it exists, otherwise nil
             return array.first ?? .nil
+            
         case .string(let string):
+            // For strings, return the first character as a single-character string
             if let firstCharacter = string.first {
                 return .string(String(firstCharacter))
             } else {
+                // Empty strings return nil
                 return .nil
             }
+            
         default:
+            // Non-collection types (integers, decimals, booleans, nil, dictionaries, ranges)
+            // return nil, which matches the behavior of liquidjs and python-liquid
             return .nil
         }
     }

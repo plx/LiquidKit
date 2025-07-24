@@ -17,6 +17,9 @@ public enum Token {
     case string(String)
     case integer(Int)
     case decimal(Decimal)
+//    case positiveInfinity
+//    case negativeInfinity
+//    case nan
     case array([Value])
     case dictionary([String: Value])
     case range(ClosedRange<Int>)
@@ -30,6 +33,12 @@ public enum Token {
       switch self {
       case .decimal(let decimal):
         "\(decimal)"
+//      case .positiveInfinity:
+//        "inf"
+//      case .negativeInfinity:
+//        "-inf"
+//      case .nan:
+//        "NaN"
       case .integer(let integer):
         "\(integer)"
       case .string(let string):

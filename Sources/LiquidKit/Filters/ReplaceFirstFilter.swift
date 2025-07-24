@@ -8,10 +8,10 @@ import Foundation
 /// Unlike the `replace` filter which replaces all occurrences, `replace_first` provides precise
 /// control over string modifications.
 ///
-/// The filter requires two parameters: the search string and the replacement string. If either
-/// parameter is missing, the filter behaves differently - with only one parameter, it treats
-/// the missing second parameter as an empty string, effectively removing the first occurrence.
-/// The filter performs case-sensitive literal string matching, not regular expression matching.
+/// The filter accepts one or two parameters: the search string and optionally the replacement 
+/// string. If the second parameter is missing, it defaults to an empty string, effectively 
+/// removing the first occurrence of the search string. The filter performs case-sensitive 
+/// literal string matching, not regular expression matching.
 ///
 /// ## Examples
 ///
@@ -33,20 +33,20 @@ import Foundation
 /// <!-- Output: "heo" -->
 /// ```
 ///
-/// Non-string input values are returned unchanged:
+/// Non-string input values are converted to strings:
 /// ```liquid
 /// {{ 5 | replace_first: "rain", "foo" }}
 /// <!-- Output: "5" -->
+/// {{ 12345 | replace_first: "2", "X" }}
+/// <!-- Output: "1X345" -->
 /// ```
 ///
-/// - Important: When the input value is nil or undefined, the filter returns an empty string.
-///   When parameters are nil/undefined, they are treated as empty strings. For example,
-///   replacing with an undefined variable effectively removes the first occurrence of the
-///   search string.
-///
-/// - Warning: The current implementation accepts non-string arguments and attempts to convert
-///   them to strings, which may not match the strict Liquid specification. Some Liquid
-///   implementations throw errors for invalid argument types.
+/// - Important: This implementation follows the behavior of liquidjs and python-liquid:
+///   - Nil/undefined input values are converted to empty strings
+///   - Nil/undefined parameters are treated as empty strings
+///   - Non-string values (integers, booleans, arrays, etc.) are automatically converted to 
+///     their string representations
+///   - An empty search string will insert the replacement at the beginning of the input
 ///
 /// - SeeAlso: ``ReplaceFilter``, ``ReplaceLastFilter``
 /// - SeeAlso: [LiquidJS Documentation](https://liquidjs.com/filters/replace_first.html)
@@ -62,14 +62,90 @@ package struct ReplaceFirstFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let string) = token else {
+        // Convert input to string - matching liquidjs/python-liquid behavior
+        // Non-string inputs are coerced to their string representation
+        let string: String
+        switch token {
+        case .string(let str):
+            string = str
+        case .nil:
+            // Nil values become empty strings
+            string = ""
+        case .dictionary:
+            // Dictionary becomes string representation "{}"
+            string = "{}"
+        case .array(let values):
+            // Array becomes string representation like "[1, 2, 3]"
+            let elements = values.map { value -> String in
+                switch value {
+                case .string(let s): return s
+                case .integer(let i): return String(i)
+                case .decimal(let d): return String(describing: d)
+                case .bool(let b): return b ? "true" : "false"
+                case .nil: return ""
+                case .array, .dictionary, .range: return value.stringValue
+                }
+            }
+            string = "[" + elements.joined(separator: ", ") + "]"
+        case .bool(let b):
+            // Boolean becomes "true" or "false"
+            string = b ? "true" : "false"
+        case .integer(let i):
+            string = String(i)
+        case .decimal(let d):
+            string = String(describing: d)
+        case .range(let r):
+            string = "\(r.lowerBound)..\(r.upperBound)"
+        }
+        
+        // Return original value if no parameters provided
+        guard parameters.count >= 1 else {
             return token
         }
         
-        guard parameters.count >= 2,
-              case .string(let search) = parameters[0],
-              case .string(let replacement) = parameters[1] else {
-            return token
+        // Get search parameter - convert to string with proper handling for all types
+        let search: String
+        switch parameters[0] {
+        case .nil:
+            search = ""
+        case .bool(let b):
+            search = b ? "true" : "false"
+        case .integer(let i):
+            search = String(i)
+        case .decimal(let d):
+            search = String(describing: d)
+        case .string(let s):
+            search = s
+        case .array, .dictionary, .range:
+            search = parameters[0].stringValue
+        }
+        
+        // Get replacement parameter - default to empty string if missing or nil
+        // This matches python-liquid behavior where missing second parameter removes the match
+        let replacement: String
+        if parameters.count >= 2 {
+            switch parameters[1] {
+            case .nil:
+                replacement = ""
+            case .bool(let b):
+                replacement = b ? "true" : "false"
+            case .integer(let i):
+                replacement = String(i)
+            case .decimal(let d):
+                replacement = String(describing: d)
+            case .string(let s):
+                replacement = s
+            case .array, .dictionary, .range:
+                replacement = parameters[1].stringValue
+            }
+        } else {
+            replacement = ""
+        }
+        
+        // Handle empty search string - insert replacement at the beginning
+        // This matches the behavior where empty string matches the start position
+        if search.isEmpty {
+            return .string(replacement + string)
         }
         
         // Find first occurrence and replace only that
@@ -79,6 +155,7 @@ package struct ReplaceFirstFilter: Filter {
             return .string(result)
         }
         
-        return token
+        // No match found - return original string
+        return .string(string)
     }
 }

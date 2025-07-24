@@ -48,7 +48,7 @@ import Foundation
 /// - Important: The filter removes newlines but does not add spaces in their place. \
 ///   This can result in words being concatenated if they were only separated by newlines.
 /// 
-/// - Warning: The filter expects no arguments. Passing any arguments will result in an error.
+/// - Note: The filter expects no arguments. Any arguments passed will be ignored.
 /// 
 /// - SeeAlso: ``StripFilter`` - Removes all occurrences of a substring
 /// - SeeAlso: ``StripHtmlFilter`` - Removes HTML tags from a string
@@ -66,16 +66,23 @@ package struct StripNewlinesFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Only process string values; return non-string values unchanged
+        // This matches the behavior of liquidjs and Shopify Liquid
         guard case .string(let string) = token else {
             return token
         }
         
-        // Remove all newline characters (both \n and \r\n)
+        // Remove all newline characters without replacing them with spaces
+        // This implementation matches liquidjs and python-liquid behavior
         let result = string
+            // First replace Windows-style CRLF (\r\n) to avoid double processing
             .replacingOccurrences(of: "\r\n", with: "")
+            // Then remove Unix-style line feeds (\n)
             .replacingOccurrences(of: "\n", with: "")
+            // Finally remove old Mac-style carriage returns (\r)
             .replacingOccurrences(of: "\r", with: "")
         
+        // Return the processed string with all newlines removed
         return .string(result)
     }
 }

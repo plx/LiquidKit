@@ -34,13 +34,16 @@ extension String: TokenValueConvertible {
 
 extension Float: TokenValueConvertible {
   public var tokenValue: Token.Value {
-    .decimal(Decimal(floatLiteral: Double(self)))
+    precondition(isFinite)
+    
+    return .decimal(Decimal(floatLiteral: Double(self)))
   }
 }
 
 extension Double: TokenValueConvertible {
   public var tokenValue: Token.Value {
-    .decimal(Decimal(floatLiteral: self))
+    precondition(isFinite)
+    return .decimal(Decimal(floatLiteral: self))
   }
 }
 
@@ -59,5 +62,11 @@ extension Range: TokenValueConvertible where Bound: SignedInteger {
 extension ClosedRange: TokenValueConvertible where Bound: SignedInteger {
   public var tokenValue: Token.Value {
     .range(Int(lowerBound)...Int(upperBound))
+  }
+}
+
+extension Token.Value: TokenValueConvertible {
+  public var tokenValue: Token.Value {
+    self
   }
 }

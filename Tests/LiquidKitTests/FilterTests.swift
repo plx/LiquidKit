@@ -444,6 +444,15 @@ class FilterTests: XCTestCase
 		let res = try parser.parse()
 		XCTAssertEqual(res, ["I sted to see the train through the rain"])
 	}
+	
+	func testFilter_removeLast() throws
+	{
+		let lexer = Lexer(templateString: "{{ \"I strained to see the train through the rain\" | remove_last: \"rain\" }}")
+		let tokens = lexer.tokenize()
+		let parser = Parser(tokens: tokens, context: Context())
+		let res = try parser.parse()
+		XCTAssertEqual(res, ["I strained to see the train through the "])
+	}
 
 	func testFilter_reject() throws
 	{

@@ -70,25 +70,40 @@ package struct LstripFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-        guard case .string(let inputString) = token else {
-            return .nil
+        // Convert the input token to a string representation
+        // This matches liquidjs and python-liquid behavior where non-string values
+        // are converted to strings before stripping
+        let stringValue: String
+        switch token {
+        case .bool(let value):
+            // Boolean values should be converted to "true" or "false" strings
+            // to match liquidjs and python-liquid behavior
+            stringValue = value ? "true" : "false"
+        default:
+            // For all other types, use the standard stringValue property
+            // This handles nil, integer, decimal, string, array, etc.
+            stringValue = token.stringValue
         }
         
+        // Use Foundation's CharacterSet to identify whitespace and newlines
         let charset = CharacterSet.whitespacesAndNewlines
-        let firstNonBlankIndex = inputString.firstIndex() {
-            char -> Bool in
-            
-            guard char.unicodeScalars.count == 1, let unichar = char.unicodeScalars.first else {
-                return true
+        
+        // Find the first index where the character is NOT whitespace
+        let firstNonWhitespaceIndex = stringValue.firstIndex { char in
+            // For each character, check if all its unicode scalars are non-whitespace
+            // This handles multi-scalar characters properly
+            return char.unicodeScalars.allSatisfy { scalar in
+                !charset.contains(scalar)
             }
-            
-            return !charset.contains(unichar)
         }
         
-        guard let index = firstNonBlankIndex else {
-            return .nil
+        // If we found a non-whitespace character, return the substring from that point
+        if let index = firstNonWhitespaceIndex {
+            return .string(String(stringValue[index...]))
+        } else {
+            // If the string is all whitespace or empty, return an empty string
+            // This matches the behavior of liquidjs and python-liquid
+            return .string("")
         }
-        
-        return .string(String(inputString[index...]))
     }
 }

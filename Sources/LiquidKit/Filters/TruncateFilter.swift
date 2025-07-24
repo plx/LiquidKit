@@ -50,10 +50,9 @@ import Foundation
 ///   truncate to zero characters and append only the ellipsis, ensuring the result doesn't exceed \
 ///   the specified length.
 /// 
-/// - Warning: Providing an undefined variable as the length parameter will result in an error. \
-///   However, an undefined ellipsis parameter is treated as an empty string.
-/// 
-/// - Warning: Providing more than two arguments will result in an error.
+/// - Note: When an undefined variable is used as the length parameter, the filter uses the default \
+///   length of 50. When an undefined variable is used as the ellipsis parameter, it is treated as \
+///   an empty string. This behavior matches liquidjs and python-liquid implementations.
 /// 
 /// - SeeAlso: ``TruncateWordsFilter`` - Truncates to a number of words instead of characters
 /// - SeeAlso: ``SliceFilter`` - Extracts a substring from a string
@@ -70,42 +69,61 @@ package struct TruncateFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Only process string values - non-strings are returned unchanged
         guard case .string(let string) = token else {
             return token
         }
         
-        // Default values
-        var length = 50
-        var ellipsis = "..."
+        // Initialize with default values per Liquid specification
+        var length = 50  // Default maximum length if not specified
+        var ellipsis = "..."  // Default ellipsis string
         
-        // Parse parameters
+        // Parse the first parameter (length)
         if parameters.count >= 1 {
             switch parameters[0] {
             case .integer(let l):
+                // Direct integer value for length
                 length = l
             case .string(let s):
+                // Try to parse string as integer
                 if let l = Int(s) {
                     length = l
                 }
+                // If parsing fails, keep default length
             default:
+                // Other types (nil, decimal, etc.) use default length
                 break
             }
         }
         
-        if parameters.count >= 2, case .string(let e) = parameters[1] {
-            ellipsis = e
+        // Parse the second parameter (ellipsis)
+        if parameters.count >= 2 {
+            switch parameters[1] {
+            case .string(let e):
+                // Use provided string as ellipsis
+                ellipsis = e
+            case .nil:
+                // Special case: undefined variables (nil) are treated as empty strings
+                // This matches liquidjs and python-liquid behavior
+                ellipsis = ""
+            default:
+                // Other types (integer, decimal, etc.) keep default ellipsis
+                break
+            }
         }
         
-        // If string is shorter than or equal to length, return as is
+        // If the string is already shorter than or equal to the target length,
+        // return it unchanged without adding ellipsis
         if string.count <= length {
             return .string(string)
         }
         
-        // Calculate how much of the string we can keep
+        // Calculate how many characters to keep from the original string
+        // The ellipsis counts toward the total length limit
         let ellipsisLength = ellipsis.count
         let keepLength = max(0, length - ellipsisLength)
         
-        // Truncate and add ellipsis
+        // Truncate the string and append the ellipsis
         let truncated = String(string.prefix(keepLength)) + ellipsis
         return .string(truncated)
     }

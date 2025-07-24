@@ -6,10 +6,10 @@
 /// rules: `false` and `nil` are considered falsy, while all other values (including empty strings,
 /// zero, and empty arrays) are considered truthy.
 /// 
-/// Unlike programming languages that use short-circuit evaluation, Liquid evaluates both operands
-/// before applying the OR operation. The result is always a boolean value (`true` or `false`),
-/// never one of the original operands. This consistent behavior makes template logic more predictable
-/// and easier to debug.
+/// The `or` operator evaluates both operands and returns a boolean value (`true` or `false`),
+/// never one of the original operands. This differs from languages like JavaScript or Python
+/// where logical operators can return the actual operand values, making template logic more 
+/// predictable and easier to debug.
 /// 
 /// The operator is particularly useful for providing fallback conditions or checking if any one of
 /// several conditions is met. For example, you might display content if a user is either logged in
@@ -85,7 +85,19 @@ public struct OrOperator: Operator {
   
   public static let operatorIdentifier: String = "or"
   
+  /// Applies the logical OR operation to two values.
+  /// 
+  /// This method evaluates the truthiness of both operands and returns `true` if either
+  /// operand is truthy. In Liquid, only `false` and `nil` are considered falsy; all other
+  /// values (including 0, empty strings, and empty collections) are truthy.
+  ///
+  /// - Parameters:
+  ///   - lhs: The left-hand side operand
+  ///   - rhs: The right-hand side operand
+  /// - Returns: A boolean Token.Value (`true` if either operand is truthy, `false` otherwise)
   public func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value {
+    // Use Swift's logical OR to combine the truthiness of both operands
+    // This evaluates both operands (no short-circuiting) and returns a boolean result
     .bool(lhs.isTruthy || rhs.isTruthy)
   }
   

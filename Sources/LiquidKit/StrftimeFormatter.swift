@@ -15,16 +15,25 @@ package class StrftimeFormatter {
     // Convert strftime format to DateFormatter patterns
     let dateFormatter = DateFormatter()
     dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-    dateFormatter.timeZone = TimeZone.current
+    // Use UTC for consistent formatting across timezones
+    // This matches the behavior of other Liquid implementations
+    dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
     
     // Parse the strftime format and convert to DateFormatter pattern
     var pattern = ""
     var index = formatString.startIndex
+    var inLiteralText = false
     
     while index < formatString.endIndex {
       let char = formatString[index]
       
       if char == "%" && formatString.index(after: index) < formatString.endIndex {
+        // End any literal text section
+        if inLiteralText {
+          pattern += "'"
+          inLiteralText = false
+        }
+        
         let nextIndex = formatString.index(after: index)
         let specifier = formatString[nextIndex]
         
@@ -113,6 +122,7 @@ package class StrftimeFormatter {
         case "t":
           pattern += "\t"
         case "%":
+          // For literal percent sign
           pattern += "%"
           
           // Week of year
@@ -135,16 +145,38 @@ package class StrftimeFormatter {
           pattern += "SSS"
           
         default:
-          // Unknown specifier, keep as is
-          pattern += "%"
-          pattern += String(specifier)
+          // Unknown specifier, keep as is - start literal text
+          if !inLiteralText {
+            pattern += "'"
+            inLiteralText = true
+          }
+          pattern += "%\(specifier)"
         }
         
         index = formatString.index(after: nextIndex)
       } else {
-        pattern += String(char)
+        // For non-format characters, we need to handle them properly in DateFormatter
+        // Letters need to be escaped with single quotes
+        if char.isLetter {
+          if !inLiteralText {
+            pattern += "'"
+            inLiteralText = true
+          }
+          pattern += String(char)
+        } else {
+          if inLiteralText {
+            pattern += "'"
+            inLiteralText = false
+          }
+          pattern += String(char)
+        }
         index = formatString.index(after: index)
       }
+    }
+    
+    // Close any open literal text
+    if inLiteralText {
+      pattern += "'"
     }
     
     dateFormatter.dateFormat = pattern

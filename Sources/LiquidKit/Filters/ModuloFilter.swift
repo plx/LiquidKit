@@ -8,10 +8,10 @@ import Foundation
 /// filter preserves integer types when both operands are integers and the result is
 /// a whole number, otherwise returns a decimal.
 /// 
-/// Division by zero is handled safely and returns 0 rather than throwing an error or
-/// returning infinity. This behavior matches the reference Liquid implementation's
-/// approach to error handling, prioritizing template robustness over mathematical
-/// strictness. Non-numeric values and nil are treated as 0 for the calculation.
+/// Division by zero throws a FilterError with a descriptive message, matching the
+/// behavior of the `divided_by` filter. This aligns with proper error handling practices
+/// where invalid operations should be caught and reported. Non-numeric divisors (nil, arrays,
+/// dictionaries, booleans) also throw errors.
 /// 
 /// ## Examples
 /// 
@@ -45,7 +45,7 @@ import Foundation
 /// Division by zero:
 /// ```liquid
 /// {{ 10 | modulo: 0 }}
-/// // Output: 0
+/// // Error: Attempted to call `modulo` on `10` with 0 as the divisor!
 /// ```
 /// 
 /// Non-numeric handling:
@@ -54,8 +54,10 @@ import Foundation
 /// // Output: 0.0
 /// ```
 /// 
-/// - Warning: Division by zero returns 0 rather than throwing an error. This is
-///   intentional behavior for template robustness but may mask logical errors.
+/// - Warning: Division by zero throws a FilterError. Ensure your templates handle
+///   potential zero divisors appropriately.
+/// 
+/// - Warning: Non-numeric divisors (including nil and non-numeric strings) throw a FilterError.
 /// 
 /// - Important: The modulo operation uses Swift's `truncatingRemainder` method, which
 ///   follows IEEE 754 remainder semantics rather than Euclidean modulo for negative numbers.
@@ -74,26 +76,124 @@ package struct ModuloFilter: Filter {
   
   @inlinable
   package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+    // If no parameters provided, return the input unchanged
     guard !parameters.isEmpty else {
       return token
     }
     
-    let left = token.doubleValue ?? 0
-    let right = parameters[0].doubleValue ?? 0
+    // Get the divisor parameter
+    let divisor = parameters[0]
     
-    guard right != 0 else {
-      return .integer(0)
+    // Nil divisor will be handled in the switch statement below
+    
+    // Get numeric value of dividend, handling special cases
+    let dividendDouble: Double
+    let dividendIsInteger: Bool
+    
+    switch token {
+    case .integer(let value):
+      dividendDouble = Double(value)
+      dividendIsInteger = true
+    case .decimal(let value):
+      dividendDouble = (value as NSNumber).doubleValue
+      dividendIsInteger = false
+    case .string(let value):
+      // String conversion - check if it's a valid number
+      if let intValue = Int(value) {
+        dividendDouble = Double(intValue)
+        dividendIsInteger = true
+      } else if let doubleValue = Double(value) {
+        dividendDouble = doubleValue
+        dividendIsInteger = false
+      } else {
+        // Invalid string becomes 0
+        dividendDouble = 0
+        dividendIsInteger = true
+      }
+    case .bool(let value):
+      // Boolean becomes 1 (true) or 0 (false)
+      dividendDouble = value ? 1.0 : 0.0
+      dividendIsInteger = true
+    case .nil, .array, .dictionary:
+      // Non-numeric types become 0
+      dividendDouble = 0
+      dividendIsInteger = true
+    case .range:
+      // Range doesn't have a numeric value
+      dividendDouble = 0
+      dividendIsInteger = true
     }
     
-    let result = left.truncatingRemainder(dividingBy: right)
+    // Get numeric value of divisor, handling special cases
+    let divisorDouble: Double
+    let divisorIsInteger: Bool
     
+    switch divisor {
+    case .integer(let value):
+      // Check for division by zero
+      guard value != 0 else {
+        throw FilterError.invalidArgument(
+          "Attempted to call `modulo` on `\(token)` with 0 as the divisor!"
+        )
+      }
+      divisorDouble = Double(value)
+      divisorIsInteger = true
+    case .decimal(let value):
+      let doubleValue = (value as NSNumber).doubleValue
+      // Check for division by zero
+      guard doubleValue != 0 else {
+        throw FilterError.invalidArgument(
+          "Attempted to call `modulo` on `\(token)` with 0 as the divisor!"
+        )
+      }
+      divisorDouble = doubleValue
+      divisorIsInteger = false
+    case .string(let value):
+      // String conversion - check if it's a valid number
+      if let intValue = Int(value) {
+        guard intValue != 0 else {
+          throw FilterError.invalidArgument(
+            "Attempted to call `modulo` on `\(token)` with 0 as the divisor!"
+          )
+        }
+        divisorDouble = Double(intValue)
+        divisorIsInteger = true
+      } else if let doubleValue = Double(value) {
+        guard doubleValue != 0 else {
+          throw FilterError.invalidArgument(
+            "Attempted to call `modulo` on `\(token)` with 0 as the divisor!"
+          )
+        }
+        divisorDouble = doubleValue
+        divisorIsInteger = false
+      } else {
+        // Invalid string divisor - throw error
+        throw FilterError.invalidArgument(
+          "Attempted to call `modulo` on `\(token)` with '\(value)' (non-numeric string) as the divisor!"
+        )
+      }
+    case .nil:
+      // Nil divisor throws error
+      throw FilterError.invalidArgument(
+        "Attempted to call `modulo` on `\(token)` with nil as the divisor!"
+      )
+    case .bool, .array, .dictionary, .range:
+      // Non-numeric divisor types throw error
+      throw FilterError.invalidArgument(
+        "Attempted to call `modulo` on `\(token)` with \(divisor) as the divisor!"
+      )
+    }
+    
+    // Perform the modulo operation
+    let result = dividendDouble.truncatingRemainder(dividingBy: divisorDouble)
+    
+    // Determine return type based on operand types and result
     // If both operands were integers and result is a whole number, return an integer
-    if case .integer = token,
-       case .integer = parameters[0],
-       result == Double(Int(result)) {
+    if dividendIsInteger && divisorIsInteger && result == Double(Int(result)) {
       return .integer(Int(result))
     }
     
+    // Otherwise return decimal
     return .decimal(Decimal(result))
   }
 }

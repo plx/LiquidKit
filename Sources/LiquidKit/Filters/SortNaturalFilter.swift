@@ -26,7 +26,7 @@ import Foundation
 /// ```liquid
 /// {% assign mixed_case = "b,A,B,a,C" | split: "," %}
 /// {{ mixed_case | sort_natural | join: "#" }}
-/// // Output: "a#A#b#B#C"
+/// // Output: "a#A#b#B#C" or "A#a#b#B#C" (order within equal elements is not guaranteed)
 /// ```
 ///
 /// Number sorting (same as regular sort):
@@ -36,12 +36,19 @@ import Foundation
 /// // Output: "1#3#30#1000"
 /// ```
 ///
+/// Sorting objects by property:
+/// ```liquid
+/// {% assign products = collection.products %}
+/// {% assign sorted_products = products | sort_natural: "company" %}
+/// // Sorts products by their company name, case-insensitively
+/// ```
+///
 /// - Important: The "natural" in `sort_natural` refers to case-insensitive sorting, not
 ///   to natural number sorting (where "2" would come before "10"). For true natural
 ///   number sorting, additional processing would be required.
 ///
-/// - Important: This implementation does not support sorting arrays of objects by a
-///   property name, which is a feature available in some Liquid implementations.
+/// - Note: When sorting objects by a property, objects missing that property will sort
+///   first (as if the property value were nil).
 ///
 /// - SeeAlso: ``SortFilter``, ``ReverseFilter``, ``UniqFilter``
 /// - SeeAlso: [Shopify Liquid sort_natural](https://shopify.github.io/liquid/filters/sort_natural/)
@@ -57,33 +64,73 @@ package struct SortNaturalFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Only process arrays
         guard case .array(let array) = token else {
             return token
         }
         
+        // Check if we have a property parameter for sorting objects
+        let propertyName: String? = parameters.first.flatMap { param in
+            guard case .string(let prop) = param else { return nil }
+            return prop
+        }
+        
         let sortedArray = array.sorted { (lhs, rhs) -> Bool in
-            switch (lhs, rhs) {
+            // If a property name is provided, extract values from dictionaries
+            let leftValue: Token.Value
+            let rightValue: Token.Value
+            
+            if let property = propertyName {
+                // Try to extract the property value from dictionaries
+                if case .dictionary(let leftDict) = lhs {
+                    leftValue = leftDict[property] ?? .nil
+                } else {
+                    // Non-dictionary items are treated as having nil for the property
+                    leftValue = .nil
+                }
+                
+                if case .dictionary(let rightDict) = rhs {
+                    rightValue = rightDict[property] ?? .nil
+                } else {
+                    // Non-dictionary items are treated as having nil for the property
+                    rightValue = .nil
+                }
+            } else {
+                // No property specified, compare the values directly
+                leftValue = lhs
+                rightValue = rhs
+            }
+            
+            // Compare the values using the same logic as before
+            switch (leftValue, rightValue) {
             case (.nil, _):
+                // nil values always sort first
                 return true
             case (_, .nil):
+                // non-nil values come after nil
                 return false
             case (.bool(let l), .bool(let r)):
+                // false before true
                 return !l && r
             case (.integer(let l), .integer(let r)):
+                // numeric comparison
                 return l < r
             case (.decimal(let l), .decimal(let r)):
+                // numeric comparison
                 return l < r
             case (.integer(let l), .decimal(let r)):
+                // convert integer to decimal for comparison
                 return Decimal(l) < r
             case (.decimal(let l), .integer(let r)):
+                // convert integer to decimal for comparison
                 return l < Decimal(r)
             case (.string(let l), .string(let r)):
-                // Natural sort: case-insensitive comparison
+                // Natural sort: case-insensitive string comparison
                 return l.localizedCaseInsensitiveCompare(r) == .orderedAscending
             default:
-                // For mixed types, convert to string and compare naturally
-                let lString = lhs.stringValue
-                let rString = rhs.stringValue
+                // For mixed types, convert to string and compare case-insensitively
+                let lString = leftValue.stringValue
+                let rString = rightValue.stringValue
                 return lString.localizedCaseInsensitiveCompare(rString) == .orderedAscending
             }
         }

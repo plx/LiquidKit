@@ -74,20 +74,27 @@ package struct UrlDecodeFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // Only process string values; pass through all other types unchanged
         guard case .string(let string) = token else {
             return token
         }
         
-        // URL decode the string
-        // Replace + with space first (form-encoded data)
+        // Step 1: Replace plus signs with spaces
+        // This follows the application/x-www-form-urlencoded convention where
+        // spaces are encoded as plus signs. This must be done before percent
+        // decoding to avoid incorrectly decoding %2B (literal plus) as space.
         let plusDecoded = string.replacingOccurrences(of: "+", with: " ")
         
-        // Then percent decode
+        // Step 2: Decode percent-encoded sequences
+        // removingPercentEncoding handles UTF-8 sequences and returns nil
+        // if the string contains invalid percent-encoding sequences
         if let decoded = plusDecoded.removingPercentEncoding {
             return .string(decoded)
         }
         
-        // If decoding fails, return original
+        // Step 3: Return original string if decoding fails
+        // This matches the behavior of liquidjs and python-liquid which
+        // return the original string rather than throwing an error
         return token
     }
 }

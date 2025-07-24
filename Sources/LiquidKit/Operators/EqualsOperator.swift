@@ -1,4 +1,6 @@
 
+import Foundation
+
 /// Implements the `==` operator, which tests whether two values are equal.
 /// 
 /// The equality operator performs strict equality comparison between two values. It is commonly used
@@ -6,10 +8,10 @@
 /// values match. The operator uses Swift's standard equality semantics, which means values must be
 /// of the same type and have the same content to be considered equal.
 /// 
-/// Unlike some template languages that perform type coercion, Liquid's equality operator is strict
-/// about types. For example, the integer `1` is not equal to the string `"1"`, and the integer `0`
-/// is not equal to the boolean `false`. This strict comparison helps prevent unexpected behavior
-/// and makes template logic more predictable.
+/// The equality operator is mostly strict about types. String `"1"` is not equal to integer `1`, 
+/// and integer `0` is not equal to boolean `false`. However, numeric values are compared by their
+/// mathematical value, so integer `1` equals decimal `1.0`. This behavior matches liquidjs and 
+/// python-liquid implementations.
 /// 
 /// Arrays and dictionaries are compared by their contents, not by reference. Two arrays with the
 /// same elements in the same order are considered equal, as are two dictionaries with the same
@@ -38,7 +40,7 @@
 /// Output: false
 /// 
 /// {% if 1.0 == 1 %}true{% else %}false{% endif %}
-/// Output: true (numeric types can be compared)
+/// Output: true (numeric types are compared by value)
 /// ```
 /// 
 /// Array and range comparisons:
@@ -57,14 +59,11 @@
 /// ```liquid
 /// {% if undefined_variable == nil %}true{% endif %}
 /// Output: true
-/// 
-/// {% if empty_array == empty %}true{% endif %}
-/// Output: true (empty arrays/objects match the special 'empty' value)
 /// ```
 /// 
-/// - Important: The equality operator does not perform type coercion. String `"1"` is not equal to \
-///   integer `1`, and integer `0` is not equal to boolean `false`. This differs from JavaScript \
-///   and some other template languages that use loose equality.
+/// - Important: The equality operator is strict about types except for numeric comparisons. \
+///   String `"1"` is not equal to integer `1`, and integer `0` is not equal to boolean `false`. \
+///   However, integer `1` equals decimal `1.0` as they represent the same mathematical value.
 /// 
 /// - Warning: When comparing floating-point numbers, be aware of potential precision issues. \
 ///   While `1.0 == 1` evaluates to true (as both represent the same numeric value), comparisons \
@@ -81,7 +80,25 @@ public struct EqualsOperator: Operator {
   public static let operatorIdentifier: String = "=="
   
   public func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value {
-    .bool(lhs == rhs)
+    // Check if both values are the same case first for efficiency
+    if lhs == rhs {
+      return .bool(true)
+    }
+    
+    // Handle numeric type coercion: integer and decimal with same numeric value are equal
+    switch (lhs, rhs) {
+    case (.integer(let intValue), .decimal(let decimalValue)):
+      // Convert integer to decimal and compare
+      return .bool(Decimal(intValue) == decimalValue)
+      
+    case (.decimal(let decimalValue), .integer(let intValue)):
+      // Convert integer to decimal and compare
+      return .bool(decimalValue == Decimal(intValue))
+      
+    default:
+      // For all other cases, values are not equal if they didn't match above
+      return .bool(false)
+    }
   }
   
   @inlinable

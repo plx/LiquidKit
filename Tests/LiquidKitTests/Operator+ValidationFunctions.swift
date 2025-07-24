@@ -113,7 +113,7 @@ func validateApplication<ErrorType>(
   additionalVerification: ((ErrorType) throws -> Void)? = nil
 ) throws where ErrorType: Error {
   do {
-    let observed = try `operator`.apply(
+    let _ = try `operator`.apply(
       operands.0,
       operands.1
     )
@@ -154,7 +154,7 @@ func validateApplication<ErrorType>(
   additionalVerification: ((ErrorType) throws -> Void)? = nil
 ) throws where ErrorType: Error {
   do {
-    let observed = try `operator`.apply(
+    let _ = try `operator`.apply(
       operands.0,
       operands.1
     )

@@ -74,14 +74,31 @@ package struct SizeFilter: Filter {
     
     @inlinable
     package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
+        // The size filter ignores all parameters - it only operates on the input value
+        // This matches the behavior of liquidjs and python-liquid
+        
         switch token {
         case .array(let array):
+            // For arrays, return the number of elements
+            // This counts all elements regardless of their type (including nil values)
             return .integer(array.count)
+            
         case .dictionary(let dictionary):
+            // For dictionaries/hashes, return the number of key-value pairs
+            // This matches how liquidjs and python-liquid handle objects/hashes
             return .integer(dictionary.count)
+            
         case .string(let string):
+            // For strings, return the number of characters (not bytes)
+            // Swift's String.count returns the number of extended grapheme clusters,
+            // which correctly handles Unicode characters like emoji as single characters
+            // This matches the character counting behavior of liquidjs and python-liquid
             return .integer(string.count)
+            
         default:
+            // For all non-collection types (nil, integers, decimals, booleans, ranges),
+            // return 0 as the size. This behavior matches other Liquid implementations
+            // where only strings, arrays, and hashes have a meaningful size
             return .integer(0)
         }
     }

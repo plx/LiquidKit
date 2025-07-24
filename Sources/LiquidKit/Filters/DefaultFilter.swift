@@ -2,15 +2,14 @@ import Foundation
 
 /// Implements the `default` filter, which provides fallback values for nil, empty, or false values.
 /// 
-/// The `default` filter returns a default value when the input is considered "falsy" in Liquid terms.
-/// This includes nil values, empty strings, and the boolean value false. For all other values,
-/// including zero, empty arrays, and non-empty strings, the original input is returned unchanged.
-/// This filter is crucial for providing fallback values in templates where data might be missing
-/// or incomplete.
+/// The `default` filter returns a default value when the input is considered "empty" according to 
+/// Liquid specifications. This includes nil values, empty strings, empty arrays, and the boolean 
+/// value false. For all other values, including zero, non-empty arrays, and non-empty strings,
+/// the original input is returned unchanged. This filter is crucial for providing fallback values
+/// in templates where data might be missing or incomplete.
 /// 
-/// The filter's behavior with false values makes it particularly useful for boolean flags where
-/// you want to provide a different value when something is explicitly false, not just missing.
-/// This differs from simple nil-checking and provides more nuanced control over default values.
+/// The filter's behavior matches the Shopify Liquid specification, where "empty" values trigger
+/// the default replacement. This provides consistent behavior across different Liquid implementations.
 /// 
 /// ## Examples
 /// 
@@ -41,16 +40,25 @@ import Foundation
 /// <!-- Output: true -->
 /// ```
 /// 
-/// - Important: The filter only considers nil, empty string (""), and false as falsy.
-///   Values like 0, empty arrays [], or strings with whitespace are not considered falsy.
+/// Empty arrays:
+/// ```liquid
+/// {{ empty_array | default: "No items" }}
+/// <!-- If empty_array is [], outputs: No items -->
+/// ```
+/// 
+/// - Important: The filter considers nil, empty string (""), empty arrays ([]), and false as values
+///   that trigger the default. Values like 0, strings with whitespace, and empty dictionaries are
+///   not considered empty and pass through unchanged.
 /// 
 /// - Important: Only the first parameter is used as the default value. Additional parameters
 ///   are ignored.
 /// 
+/// - Note: The `allow_false` parameter mentioned in some Liquid implementations is not currently
+///   supported. In this implementation, `false` always triggers the default replacement.
+/// 
 /// - SeeAlso: ``UnlessFilter``
 /// - SeeAlso: [Shopify Liquid default](https://shopify.github.io/liquid/filters/default/)
 /// - SeeAlso: [LiquidJS default](https://liquidjs.com/filters/default.html)
-/// - SeeAlso: [Python Liquid default](https://liquid.readthedocs.io/en/latest/filters/default/)
 @usableFromInline
 package struct DefaultFilter: Filter {
   @usableFromInline
@@ -61,15 +69,35 @@ package struct DefaultFilter: Filter {
   
   @inlinable
   package func evaluate(token: Token.Value, parameters: [Token.Value]) throws -> Token.Value {
-    // If the value is nil, empty string, or false, return the default value
+    // Get the default value from the first parameter, or nil if no parameters
+    let defaultValue = parameters.isEmpty ? Token.Value.nil : parameters[0]
+    
+    // Check if the input value should be replaced with the default
     switch token {
     case .nil:
-      return parameters.isEmpty ? .nil : parameters[0]
+      // nil values always use the default
+      return defaultValue
+      
     case .string(let str) where str.isEmpty:
-      return parameters.isEmpty ? .nil : parameters[0]
+      // Empty strings use the default
+      return defaultValue
+      
     case .bool(false):
-      return parameters.isEmpty ? .nil : parameters[0]
+      // false uses the default (unless allow_false parameter is used, which we don't support yet)
+      return defaultValue
+      
+    case .array(let arr) where arr.isEmpty:
+      // Empty arrays use the default according to Shopify Liquid spec
+      return defaultValue
+      
     default:
+      // All other values pass through unchanged:
+      // - Non-empty strings (including whitespace-only strings)
+      // - true
+      // - Any number (including 0)
+      // - Non-empty arrays
+      // - Dictionaries (even empty ones)
+      // - Ranges
       return token
     }
   }

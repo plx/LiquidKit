@@ -6,8 +6,9 @@
 /// considered falsy, while all other values (including empty strings, zero, and empty arrays) are
 /// considered truthy.
 /// 
-/// Unlike programming languages that use short-circuit evaluation, Liquid evaluates both operands
-/// before applying the AND operation. The result is always a boolean value (`true` or `false`),
+/// In this implementation, both operands are evaluated before the AND operation is applied. This is
+/// consistent with how Liquid template engines typically work, where expressions are fully evaluated
+/// before operators are applied. The result is always a boolean value (`true` or `false`),
 /// never one of the original operands. This consistent behavior makes template logic more predictable
 /// and easier to debug.
 /// 
@@ -82,7 +83,24 @@ public struct AndOperator: Operator {
   
   public static let operatorIdentifier: String = "and"
   
+  /// Applies the AND operator to two token values.
+  /// 
+  /// This implementation:
+  /// 1. Evaluates the truthiness of the left operand using Liquid's truthiness rules
+  /// 2. Evaluates the truthiness of the right operand using Liquid's truthiness rules
+  /// 3. Returns a boolean Token.Value containing the result of the logical AND operation
+  /// 
+  /// Truthiness rules in Liquid:
+  /// - `false` and `nil` are falsy
+  /// - All other values are truthy (including 0, "", [], {})
+  /// 
+  /// - Parameters:
+  ///   - lhs: The left-hand side operand
+  ///   - rhs: The right-hand side operand
+  /// - Returns: A boolean Token.Value (.bool(true) or .bool(false))
   public func apply(_ lhs: Token.Value, _ rhs: Token.Value) -> Token.Value {
+    // Use Swift's && operator which provides short-circuit evaluation at the Swift level
+    // Both operands have already been evaluated by the time they reach this method
     .bool(lhs.isTruthy && rhs.isTruthy)
   }
   
